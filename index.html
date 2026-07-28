@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#DDF3E6">
+<title>Mimo de Mãe — Assistência ao Parto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#FBF6F8; --surface:#FFFFFF; --surface2:#F7EEF2;
+  --rose:#A13E6D; --rose-light:#CA6796; --rose-deep:#7E2E54; --rose-bg:#FBEBF2;
+  --btn:#A13E6D; --btn-soft:#FBEBF2; --btn-soft-ink:#A13E6D; --gtrack:#E7D8E1;
+  --grad:linear-gradient(135deg,#7E2E54 0%,#A13E6D 45%,#CA6796 100%);
+  --mint:#EAF6EF; --mint-deep:#3FB07A; --mint-ink:#2E7D52;
+  --ink:#2C2530; --ink2:#7A6E76; --ink3:#B0A4AC;
+  --line:rgba(44,37,48,.09); --line2:rgba(44,37,48,.055);
+  --shadow:0 1px 3px rgba(126,46,84,.06), 0 8px 24px rgba(126,46,84,.07);
+  --shadow-lg:0 14px 44px rgba(126,46,84,.16);
+  --ok:#2E9E6B; --warn:#E0912F; --danger:#D4574E;
+  --radius:20px; --radius-sm:14px;
+}
+html[data-theme="dark"]{
+  --bg:#0C0810; --surface:#150F16; --surface2:#1E141C;
+  --rose:#E68CB6; --rose-light:#CA6796; --rose-deep:#F0A9CC; --rose-bg:#25141F;
+  --btn:#8A3A62; --btn-soft:#2A1622; --btn-soft-ink:#E68CB6; --gtrack:#3A2833;
+  --grad:linear-gradient(135deg,#4A1B36 0%,#7A3255 55%,#9E4574 100%);
+  --mint:#16281E; --mint-deep:#4FC08A; --mint-ink:#7FD3A6;
+  --ink:#F3E9EF; --ink2:#B09FA9; --ink3:#786872;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.045);
+  --shadow:0 1px 3px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.4);
+  --shadow-lg:0 14px 44px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Montserrat',system-ui,sans-serif;
+  background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased; font-size:14px; line-height:1.45;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+
+/* ---------- Hero ---------- */
+.hero{
+  background:var(--grad); color:#fff;
+  padding:calc(env(safe-area-inset-top) + 18px) 20px 24px;
+  border-radius:0 0 28px 28px; position:relative; overflow:hidden;
+}
+.hero::after{content:'';position:absolute;top:-40px;right:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.09)}
+.hero::before{content:'';position:absolute;bottom:-60px;left:-20px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hero-top{display:flex;align-items:center;gap:11px;position:relative;z-index:2}
+.logo-badge{
+  width:50px;height:50px;border-radius:50%;background:#fff;flex:none;
+  display:grid;place-items:center;overflow:hidden;
+  box-shadow:0 4px 14px rgba(0,0,0,.18);border:2px solid rgba(255,255,255,.6);
+}
+.logo-badge img{width:80%;height:80%;object-fit:contain}
+.brand{display:flex;flex-direction:column;line-height:1.15}
+.brand b{font-weight:800;font-size:19px;letter-spacing:.2px}
+.brand span{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;opacity:.85;font-weight:600;margin-top:2px}
+.hero-top .spacer{flex:1}
+.icon-btn{
+  width:40px;height:40px;border-radius:50%;
+  display:grid;place-items:center;background:rgba(255,255,255,.18);
+  backdrop-filter:blur(6px);color:#fff;font-size:17px;transition:.15s;flex:none;
+}
+.icon-btn:active{transform:scale(.92)}
+.hero-hi{position:relative;z-index:2;margin-top:14px;font-size:15.5px;font-weight:700;line-height:1.25}
+.hero-hi small{display:block;font-size:11px;font-weight:500;opacity:.82;margin-top:2px}
+
+/* ---------- Tabs ---------- */
+.tabs{
+  position:sticky;top:0;z-index:30;
+  display:flex;gap:6px;padding:12px 14px 10px;
+  background:linear-gradient(var(--bg),var(--bg) 70%,transparent);
+}
+.tab{
+  flex:1;padding:11px;border-radius:14px;font-weight:700;font-size:13px;
+  color:var(--ink2);background:var(--surface);border:1px solid var(--line);transition:.15s;
+  display:flex;align-items:center;justify-content:center;gap:7px;box-shadow:var(--shadow);
+}
+.tab.active{background:var(--btn);color:#fff;border-color:transparent;box-shadow:0 6px 16px rgba(126,46,84,.34)}
+.tab svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+.wrap{max-width:1180px;margin:0 auto;padding:14px}
+.view{display:none} .view.active{display:block}
+
+/* ---------- Search & filters ---------- */
+.search{
+  display:flex;align-items:center;gap:10px;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;padding:11px 14px;box-shadow:var(--shadow);
+}
+.search input{border:none;background:none;outline:none;flex:1;font-size:15px;color:var(--ink)}
+.search input::placeholder{color:var(--ink3)}
+.search svg{width:18px;height:18px;stroke:var(--ink3);fill:none;stroke-width:2}
+.chips{display:flex;flex-wrap:wrap;gap:8px;padding:12px 2px 4px}
+.chip{
+  white-space:nowrap;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink2);flex:none;transition:.15s;
+}
+.chip.active{background:var(--btn);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(126,46,84,.28)}
+.count-lbl{font-size:12px;color:var(--ink3);margin:4px 2px 10px;font-weight:600}
+
+/* ---------- Patient list ---------- */
+.plist{display:flex;flex-direction:column;gap:10px}
+.pcard{
+  display:flex;align-items:center;gap:13px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;
+  box-shadow:var(--shadow);transition:.15s;text-align:left;width:100%;
+}
+.pcard:active{transform:scale(.99)}
+.avatar{
+  width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-weight:700;font-size:15px;color:#fff;font-family:'Space Mono',monospace;
+}
+.pcard .info{flex:1;min-width:0}
+.pcard .nm{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .sub{font-size:12px;color:var(--ink2);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dot{width:3px;height:3px;border-radius:50%;background:var(--ink3)}
+.pcard .right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px}
+.badge.b-prox{background:var(--btn);color:#fff}
+.badge.b-ativa{background:rgba(63,176,122,.16);color:var(--mint-ink)} html[data-theme="dark"] .badge.b-ativa{background:rgba(79,192,138,.18)}
+.badge.b-fim{background:var(--surface2);color:var(--ink2)}
+.badge.b-nasceu{background:rgba(63,176,122,.18);color:var(--mint-ink)} html[data-theme="dark"] .badge.b-nasceu{background:rgba(79,192,138,.2)}
+.badge.b-semdata{background:#FBF3E3;color:#9A7420} html[data-theme="dark"] .badge.b-semdata{background:#33291A;color:#E0BE7E}
+.ig-pill{font-size:11px;font-weight:700;color:var(--rose)}
+
+/* ---------- Detail ---------- */
+#detailView{padding-top:0}
+.detail-head{
+  background:var(--grad);color:#fff;
+  padding:calc(env(safe-area-inset-top) + 14px) 18px 22px;
+  border-radius:0 0 26px 26px;
+}
+.detail-head .dh-meta{color:rgba(255,255,255,.85)}
+.back-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.back-btn{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13px;color:#fff;background:rgba(255,255,255,.16);padding:7px 13px;border-radius:20px}
+.dh-main{display:flex;align-items:center;gap:14px}
+.dh-main .avatar{width:62px;height:62px;font-size:21px;border:3px solid rgba(255,255,255,.35)}
+.dh-name{font-size:20px;font-weight:800;line-height:1.15;color:#fff}
+.dh-meta{font-size:12.5px;color:var(--ink2);margin-top:3px}
+.actions{display:flex;gap:9px;margin-top:16px;flex-wrap:wrap}
+.act{
+  display:flex;align-items:center;gap:7px;padding:9px 14px;border-radius:12px;font-weight:700;font-size:12.5px;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink);box-shadow:var(--shadow);
+}
+.act.wa{background:#25D366;color:#fff;border-color:transparent}
+.act svg{width:15px;height:15px}
+
+/* highlight gestational */
+.hl{
+  margin:16px;padding:16px;border-radius:var(--radius);
+  background:var(--rose-bg);border:1px solid rgba(161,62,109,.18);
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;
+}
+.hl .cell .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--rose);font-weight:700}
+.hl .cell .v{font-size:22px;font-weight:800;margin-top:3px;color:var(--ink)}
+.hl .cell .v small{font-size:12px;font-weight:600;color:var(--ink2)}
+.hl .cell .cd{font-size:12px;color:var(--ink2);margin-top:1px;font-weight:600}
+
+/* controle de nascimento */
+.born{margin:16px}
+.born-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:14px;border-radius:15px;
+  background:var(--btn);color:#fff;font-weight:700;font-size:13.5px;box-shadow:0 6px 16px rgba(126,46,84,.28)}
+.born-btn:active{transform:scale(.99)}
+.born-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.born-done{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:13px}
+.born-done .bd-head{display:flex;align-items:center;gap:11px}
+.born-done .bd-head b{font-size:14px;font-weight:700;display:block}
+.born-done .bd-head small{font-size:11.5px;color:var(--ink2)}
+.sec-ic.ok{background:rgba(63,176,122,.16);color:var(--mint-ink)}
+.bd-field{display:flex;flex-direction:column;gap:7px}
+.bd-field .lbl{font-size:10.5px;color:var(--ink2);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.via-toggle{display:flex;gap:8px}
+.via-opt{flex:1;padding:11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:13px;transition:.15s}
+.via-opt.sel{background:var(--btn);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(126,46,84,.26)}
+.born-done input[type=date],.born-done textarea{width:100%;padding:10px 11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:13px}
+.born-done textarea{min-height:66px;resize:vertical;line-height:1.4}
+.bd-actions{display:flex;justify-content:flex-end}
+.born-undo{padding:9px 15px;border-radius:10px;background:transparent;color:var(--danger);font-weight:700;font-size:12.5px;border:1px solid var(--line);white-space:nowrap}
+.del-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:14px;background:transparent;border:1px solid var(--danger);color:var(--danger);font-weight:700;font-size:13px}
+.del-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.del-btn:active{transform:scale(.99)}
+
+.section{margin:16px}
+.section h3{
+  font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink2);
+  font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:9px;
+}
+.sec-ic{
+  width:32px;height:32px;border-radius:10px;flex:none;
+  background:var(--btn-soft);color:var(--btn-soft-ink);
+  display:grid;place-items:center;
+}
+.sec-ic svg{width:17px;height:17px}
+.sec-ic svg,.act svg,.icon-btn svg{stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn svg{width:19px;height:19px}
+.cdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.empty-state svg{width:42px;height:42px;stroke:var(--ink3);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto 12px}
+.kv{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.kv .row{display:flex;justify-content:space-between;gap:14px;padding:12px 15px;border-bottom:1px solid var(--line2)}
+.kv .row:last-child{border-bottom:none}
+.kv .row .k{font-size:12.5px;color:var(--ink2);flex:none;max-width:44%}
+.kv .row .v{font-size:13px;font-weight:600;text-align:right;word-break:break-word}
+.kv .row .v.empty{color:var(--ink3);font-weight:400;font-style:italic}
+.raw-flag{font-size:10px;color:var(--warn);font-weight:700;margin-left:5px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.tag{font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;background:var(--mint);color:var(--mint-ink)}
+.tag.alert{background:#FDECEA;color:#C0453B} html[data-theme="dark"] .tag.alert{background:#3A211E;color:#F0A99F}
+
+/* ---------- Dashboard ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px;box-shadow:var(--shadow)}
+.kpi .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink2);font-weight:700}
+.kpi .v{font-size:30px;font-weight:800;margin-top:6px;line-height:1}
+.kpi .v.rose{color:var(--rose)} .kpi .v.warn{color:var(--warn)} .kpi .v.ok{color:var(--ok)}
+.kpi .m{font-size:11px;color:var(--ink3);margin-top:4px;font-weight:600}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.chart-card h4{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--ink2);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.chart-box{position:relative;height:230px}
+.chart-box.dn{height:310px}
+.chart-card.wide{grid-column:1/-1}
+
+/* gauges (estilo rosca com rótulo central) */
+.gauges{display:flex;gap:12px;justify-content:space-around;flex-wrap:wrap;padding:10px 0}
+.gauge{display:flex;flex-direction:column;align-items:center;gap:9px;flex:1;min-width:92px}
+.gauge .ring{width:108px;height:108px;border-radius:50%;display:grid;place-items:center;position:relative;
+  background:conic-gradient(var(--gc) calc(var(--gp)*3.6deg), var(--gtrack) 0)}
+.gauge .ring::before{content:'';position:absolute;width:73%;height:73%;border-radius:50%;background:var(--surface)}
+.gauge .ring .num{position:relative;font-size:23px;font-weight:800;color:var(--gc)}
+.gauge .glabel{font-size:12.5px;font-weight:700;color:var(--ink)}
+.gauge .gsub{font-size:11px;color:var(--ink2);font-weight:600;margin-top:-5px}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--ink3)}
+.empty-state .em{font-size:40px;margin-bottom:12px}
+
+/* ---------- FAB (novo cadastro) ---------- */
+.fab{
+  position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:45;
+  width:56px;height:56px;border-radius:50%;background:var(--grad);color:#fff;
+  display:grid;place-items:center;box-shadow:0 8px 24px rgba(126,46,84,.45);transition:.15s;
+}
+.fab svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
+.fab:active{transform:scale(.92)}
+
+/* ---------- Login ---------- */
+.login-wrap{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;background:var(--grad)}
+.login-card{width:100%;max-width:380px;background:var(--surface);border-radius:24px;padding:30px 24px;box-shadow:var(--shadow-lg)}
+.login-logo{width:76px;height:76px;border-radius:50%;background:#fff;margin:0 auto 16px;display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.12);overflow:hidden}
+.login-logo img{width:80%;height:80%;object-fit:contain}
+.login-card h1{text-align:center;font-size:20px;font-weight:800}
+.login-card .sub{text-align:center;font-size:12px;color:var(--ink2);margin:3px 0 22px;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.login-card label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;display:block;margin:0 0 6px 2px}
+.login-card input{width:100%;padding:13px 14px;border-radius:13px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:15px;margin-bottom:14px}
+.login-card input:focus{outline:none;border-color:var(--rose)}
+.login-btn{width:100%;padding:14px;border-radius:14px;background:var(--btn);color:#fff;font-weight:800;font-size:14.5px;box-shadow:0 6px 16px rgba(126,46,84,.3)}
+.login-btn:disabled{opacity:.6}
+.login-err{background:#FDECEA;color:#C0453B;padding:10px 12px;border-radius:11px;font-size:12.5px;font-weight:600;margin-bottom:14px;text-align:center}
+html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
+
+/* ---------- Formulário de cadastro ---------- */
+.form-head{background:var(--grad);color:#fff;padding:calc(env(safe-area-inset-top) + 14px) 18px 20px;border-radius:0 0 26px 26px}
+.form-head .back-btn{margin-bottom:12px}
+.form-head h2{font-size:19px;font-weight:800}
+.form-head p{font-size:12.5px;color:rgba(255,255,255,.85);margin-top:2px}
+.fsection{margin:16px}
+.fsection > h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink2);font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:9px}
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.4px}
+.field label .req{color:var(--danger);margin-left:2px}
+.field input,.field select,.field textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:14px}
+.field input:focus,.field select,.field textarea:focus{outline:none;border-color:var(--rose)}
+.field input:disabled{opacity:.7;background:var(--surface)}
+.field textarea{min-height:60px;resize:vertical}
+.field .hint{font-size:10.5px;color:var(--ink3)}
+.field.err input,.field.err select{border-color:var(--danger)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg .opt{flex:1;min-width:80px;padding:10px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:12.5px;text-align:center;transition:.15s}
+.seg .opt.sel{background:var(--btn);color:#fff;border-color:transparent}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks .ck{padding:9px 13px;border-radius:20px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:600;font-size:12.5px;transition:.15s}
+.checks .ck.sel{background:var(--mint);border-color:var(--mint-deep);color:var(--mint-ink)}
+.cep-msg{font-size:11px;font-weight:600;margin-top:2px}
+.cep-msg.ok{color:var(--ok)} .cep-msg.load{color:var(--ink2)} .cep-msg.bad{color:var(--danger)}
+.form-submit{margin:20px 16px 40px}
+.form-submit button{width:100%;padding:15px;border-radius:15px;background:var(--btn);color:#fff;font-weight:800;font-size:15px;box-shadow:0 8px 20px rgba(126,46,84,.32)}
+.form-submit button:disabled{opacity:.6}
+.import-banner{margin:0 0 12px;background:var(--rose-bg);border:1px solid rgba(161,62,109,.2);border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:12px}
+.import-banner div{flex:1;font-size:12.5px;color:var(--ink)}
+.import-banner b{display:block;font-size:13px;margin-bottom:1px}
+.import-banner button{padding:9px 14px;border-radius:11px;background:var(--btn);color:#fff;font-weight:700;font-size:12.5px;white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:30px;font-weight:700;font-size:13px;box-shadow:var(--shadow-lg);opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+.logout-btn{background:rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:700;padding:8px 12px;border-radius:20px}
+
+@media(max-width:760px){
+  .charts{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi .v{font-size:26px}
+  .wrap{padding:12px 12px 30px}
+  .chart-card.wide{grid-column:auto}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" style="display:none">
+  <div class="login-wrap">
+    <form class="login-card" id="loginForm">
+      <div class="login-logo"><img src="./logo.png" alt="Mimo de Mãe"></div>
+      <h1>Mimo de Mãe</h1>
+      <div class="sub">Enf.ª Vanessa Cardinal</div>
+      <div class="login-err" id="loginErr" style="display:none"></div>
+      <label>E-mail</label>
+      <input type="email" id="loginEmail" autocomplete="username" required>
+      <label>Senha</label>
+      <input type="password" id="loginPass" autocomplete="current-password" required>
+      <button type="submit" class="login-btn" id="loginBtn">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="hero">
+  <div class="hero-top">
+    <div class="logo-badge"><img src="./logo.png" alt="Mimo de Mãe"></div>
+    <div class="brand">
+      <b>Mimo de Mãe</b>
+      <span>Enf.ª Vanessa Cardinal</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="themeBtn" title="Tema">🌙</button>
+    <button class="logout-btn" id="logoutBtn" title="Sair" style="display:none">Sair</button>
+  </div>
+  <div class="hero-hi" id="heroHi">Olá, Vanessa<small>Suas pacientes num só lugar</small></div>
+</div>
+
+<div class="tabs" id="tabsBar">
+  <button class="tab active" data-tab="pacientes"><svg viewBox="0 0 24 24"><circle cx="9" cy="7.5" r="3.3"/><path d="M3.5 19.5c0-3.1 2.5-5.3 5.5-5.3s5.5 2.2 5.5 5.3"/><path d="M16.2 4.7a3.2 3.2 0 010 5.8"/><path d="M18.4 19.5c0-2.4-1-4.2-2.6-5.1"/></svg> Pacientes</button>
+  <button class="tab" data-tab="painel"><svg viewBox="0 0 24 24"><path d="M3 20.5h18"/><rect x="5" y="11" width="3.4" height="7.5" rx="1"/><rect x="10.3" y="6" width="3.4" height="12.5" rx="1"/><rect x="15.6" y="13.5" width="3.4" height="5" rx="1"/></svg> Painel</button>
+</div>
+
+<!-- PACIENTES -->
+<div class="view active" id="pacientesView">
+  <div class="wrap">
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+      <input id="searchInput" placeholder="Buscar por nome, cidade, médico…" autocomplete="off">
+    </div>
+    <div class="chips" id="filterChips"></div>
+    <div id="importBanner"></div>
+    <div class="count-lbl" id="countLbl"></div>
+    <div class="plist" id="plist"></div>
+  </div>
+</div>
+
+<!-- DETALHE -->
+<div class="view" id="detailView"></div>
+
+<!-- NOVO CADASTRO -->
+<div class="view" id="cadastroView"></div>
+<button class="fab" id="fabNovo" title="Novo cadastro"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+
+<!-- PAINEL -->
+<div class="view" id="painelView">
+  <div class="wrap">
+    <div class="kpis" id="kpis"></div>
+    <div class="charts" id="charts">
+      <div class="chart-card wide"><h4><span class="sec-ic" data-ic="calendar"></span>Partos previstos por mês (DPP)</h4><div class="chart-box"><canvas id="chMes"></canvas></div></div>
+      <div class="chart-card"><h4><span class="sec-ic" data-ic="briefcase"></span>Pacientes por pacote</h4><div class="chart-box dn"><canvas id="chPacote"></canvas></div></div>
+      <div class="chart-card"><h4><span class="sec-ic" data-ic="baby"></span>Gestantes ativas por trimestre</h4><div class="gauges" id="gaugeTri"></div></div>
+      <div class="chart-card"><h4><span class="sec-ic" data-ic="pulse"></span>Tipo de parto (nascidos)</h4><div class="gauges" id="gaugeVia"></div></div>
+      <div class="chart-card"><h4><span class="sec-ic" data-ic="droplet"></span>Tipo sanguíneo</h4><div class="chart-box dn"><canvas id="chSangue"></canvas></div></div>
+      <div class="chart-card"><h4><span class="sec-ic" data-ic="pulse"></span>Comorbidades relatadas</h4><div class="chart-box"><canvas id="chComorb"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- data.js (seed dos 60 com PII) desligado: dados agora vêm do Supabase. NÃO publicar data.js. -->
+<script>
+/* ===== Config Supabase ===== */
+const SUPA_URL = 'https://orcctjbosfdtxdfdhnbx.supabase.co';
+const SUPA_KEY = 'sb_publishable_oNu_rbujM-PNfsfO8Cod5Q_EREIbAbA';
+const ONLINE = !!(SUPA_URL && SUPA_KEY);
+const sb = ONLINE ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+
+let P = (window.PACIENTES||[]);
+const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const DAY = 86400000;
+const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESES_L = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+/* ---------- helpers ---------- */
+const parseISO = s => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); const dt=new Date(y,m-1,d); dt.setHours(0,0,0,0); return isNaN(dt)?null:dt; };
+const fmtBR = s => { const d=parseISO(s); return d? String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear() : null; };
+const addDays = (d,n) => new Date(d.getTime()+n*DAY);
+const diffDays = (a,b) => Math.round((a-b)/DAY);
+function initials(nome){ const p=(nome||'').trim().split(/\s+/); return ((p[0]||'')[0]||'?').toUpperCase()+((p.length>1?p[p.length-1][0]:'')||'').toUpperCase(); }
+function avatarColor(nome){ const cols=['#A13E6D','#CA6796','#7E2E54','#B85588','#C77BA0','#933D69','#D583AC','#8E3A63']; let h=0; for(const c of (nome||'')) h=(h*31+c.charCodeAt(0))>>>0; return cols[h%cols.length]; }
+function idade(nascISO){ const d=parseISO(nascISO); if(!d) return null; let a=TODAY.getFullYear()-d.getFullYear(); const m=TODAY.getMonth()-d.getMonth(); if(m<0||(m===0&&TODAY.getDate()<d.getDate()))a--; return (a<10||a>70)?null:a; }
+const bloodClean = s => (s||'').replace(/\s+/g,'').toUpperCase();
+
+// DPP efetiva: prioriza ultrassom, depois DUM
+function dppEff(p){ return p.dppUltra || p.dppDum || null; }
+// DUM efetiva: se não houver, estima a partir da DPP (DPP = DUM + 280d)
+function dumEff(p){ if(p.dum) return parseISO(p.dum); const d=dppEff(p); return d? addDays(parseISO(d),-280):null; }
+// idade gestacional
+function ig(p){ const dum=dumEff(p); if(!dum) return null; const dias=diffDays(TODAY,dum); if(dias<0||dias>315) return null; return {sem:Math.floor(dias/7), dia:dias%7, dias}; }
+function trimestre(p){ const g=ig(p); if(!g) return null; if(g.sem<=13) return 1; if(g.sem<=27) return 2; return 3; }
+
+/* ---------- marcação de nascimento (override manual; Fase 2 vai pro Supabase) ---------- */
+function isoOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+let OVER; try{ OVER=JSON.parse(localStorage.getItem('mimo_overrides')||'{}'); }catch(e){ OVER={}; }
+function saveOver(){ localStorage.setItem('mimo_overrides', JSON.stringify(OVER)); }
+function chkErr(r){ if(r&&r.error) console.error('Supabase:', r.error.message); }
+function bornInfo(p){
+  if(ONLINE) return p.nasceu ? {nasceu:true, data:p.data_parto||'', via:p.via_parto||'', indicacao:p.indicacao_cesarea||''} : null;
+  const o=OVER[p.id]; return (o&&o.nasceu)?o:null;
+}
+function setBorn(id,iso){
+  const p=P.find(x=>x.id===id);
+  if(ONLINE){
+    if(iso){ if(p){p.nasceu=true;p.data_parto=iso;} sb.from('mimo_pacientes').update({nasceu:true,data_parto:iso}).eq('id',id).then(chkErr); }
+    else { if(p){p.nasceu=false;p.data_parto=null;p.via_parto=null;p.indicacao_cesarea=null;} sb.from('mimo_pacientes').update({nasceu:false,data_parto:null,via_parto:null,indicacao_cesarea:null}).eq('id',id).then(chkErr); }
+    return;
+  }
+  if(iso){ OVER[id]=Object.assign({via:'',indicacao:''}, OVER[id]||{}, {nasceu:true,data:iso}); } else { delete OVER[id]; }
+  saveOver();
+}
+function updBorn(id,field,val){
+  if(ONLINE){
+    const col={data:'data_parto',via:'via_parto',indicacao:'indicacao_cesarea'}[field];
+    const p=P.find(x=>x.id===id); if(p) p[col]=val;
+    sb.from('mimo_pacientes').update({[col]:val}).eq('id',id).then(chkErr);
+    return;
+  }
+  if(OVER[id]){ OVER[id][field]=val; saveOver(); }
+}
+
+function status(p){
+  if(bornInfo(p)) return {key:'fim',label:'Nasceu',cls:'b-nasceu',born:true};
+  const d=dppEff(p); if(!d) return {key:'semdata',label:'Sem data',cls:'b-semdata'};
+  const dias=diffDays(parseISO(d),TODAY);
+  if(dias < -14) return {key:'fim',label:'Concluída',cls:'b-fim',dias};
+  if(dias <= 30) return {key:'prox',label:'Parto próximo',cls:'b-prox',dias};
+  return {key:'ativa',label:'Gestante',cls:'b-ativa',dias};
+}
+function countdown(p){
+  const b=bornInfo(p); if(b) return b.data?('Nasceu em '+fmtBR(b.data)):'Bebê nasceu';
+  const d=dppEff(p); if(!d) return null;
+  const dias=diffDays(parseISO(d),TODAY);
+  if(dias < -14) return 'DPP passou há '+Math.abs(dias)+' dias';
+  if(dias < 0) return 'DPP há '+Math.abs(dias)+' dias';
+  if(dias===0) return 'DPP é hoje!';
+  if(dias<=45){ return 'faltam '+dias+' dias'; }
+  const sem=Math.floor(dias/7); return 'faltam ~'+sem+' semanas';
+}
+
+/* ---------- state ---------- */
+let filter='todas', term='';
+const FILTERS=[
+  {k:'todas',label:'Todas'},
+  {k:'prox',label:'Parto próximo',dot:'#D4574E'},
+  {k:'ativa',label:'Gestantes',dot:'#3FB07A'},
+  {k:'tri3',label:'3º trimestre'},
+  {k:'fim',label:'Concluídas'},
+];
+
+function passFilter(p){
+  const st=status(p);
+  if(filter==='todas') return true;
+  if(filter==='tri3') return trimestre(p)===3;
+  return st.key===filter;
+}
+function passTerm(p){
+  if(!term) return true;
+  const t=term.toLowerCase();
+  return [p.nome,p.endereco,p.medico,p.maternidade,p.bebe,p.acompNome].some(x=>(x||'').toLowerCase().includes(t));
+}
+
+/* ---------- render list ---------- */
+function renderChips(){
+  document.getElementById('filterChips').innerHTML = FILTERS.map(f=>{
+    const n = P.filter(p=>{ const st=status(p); if(f.k==='todas')return true; if(f.k==='tri3')return trimestre(p)===3; return st.key===f.k; }).length;
+    return `<button class="chip ${filter===f.k?'active':''}" data-f="${f.k}">${f.dot?`<span class="cdot" style="background:${f.dot}"></span>`:''}${f.label} · ${n}</button>`;
+  }).join('');
+}
+function renderList(){
+  const prio={prox:0,ativa:1,semdata:2,fim:3};
+  const list = P.filter(p=>passFilter(p)&&passTerm(p))
+    .sort((a,b)=>{
+      const sa=status(a),sb=status(b);
+      if(prio[sa.key]!==prio[sb.key]) return prio[sa.key]-prio[sb.key];
+      const da=dppEff(a),db=dppEff(b);
+      if(sa.key==='fim'){ if(da&&db) return parseISO(db)-parseISO(da); }       // concluídas: mais recentes primeiro
+      if(da&&db) return parseISO(da)-parseISO(db);                              // ativas: DPP mais próxima primeiro
+      if(da)return -1; if(db)return 1; return a.nome.localeCompare(b.nome);
+    });
+  document.getElementById('countLbl').textContent = list.length+' de '+P.length+' pacientes';
+  const el=document.getElementById('plist');
+  if(!list.length){ el.innerHTML='<div class="empty-state">'+icon('search')+'Nenhuma paciente encontrada.</div>'; return; }
+  el.innerHTML = list.map(p=>{
+    const st=status(p), g=ig(p), id=idade(p.nascimento);
+    const sub=[]; if(g)sub.push(g.sem+'s'+g.dia+'d'); if(id)sub.push(id+' anos'); const cid=cidade(p.endereco); if(cid)sub.push(cid);
+    return `<button class="pcard" data-id="${p.id}">
+      <div class="avatar" style="background:${avatarColor(p.nome)}">${initials(p.nome)}</div>
+      <div class="info">
+        <div class="nm">${esc(nameCase(p.nome))}</div>
+        <div class="sub">${sub.map((s,i)=>(i?'<span class="dot"></span>':'')+esc(s)).join('')}</div>
+      </div>
+      <div class="right">
+        <span class="badge ${st.cls}">${st.label}</span>
+        ${dppEff(p)?`<span class="ig-pill">${countdown(p)}</span>`:''}
+      </div>
+    </button>`;
+  }).join('');
+}
+function cidade(end){
+  if(!end) return null;
+  const parts=end.split(/[,\-\/]/).map(s=>s.trim()).filter(Boolean);
+  for(let i=parts.length-1;i>=0;i--){
+    const seg=parts[i].replace(/\b[a-zA-Z]{2}\b$/,'').trim();
+    if(seg.length>=3 && !/\d/.test(seg) && !/^(ap|apto|apart|casa|bloco|bl|qd|lote|fundos|sobrado|km)$/i.test(seg)) return seg;
+  }
+  return null;
+}
+function nameCase(n){ return (n||'').toLowerCase().replace(/(^|\s|')\p{L}/gu,c=>c.toUpperCase()); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- ícones de linha (padrão único do app) ---------- */
+const ICONS={
+  users:'<circle cx="9" cy="7.5" r="3.2"/><path d="M3.6 19.5c0-3 2.4-5.2 5.4-5.2s5.4 2.2 5.4 5.2"/><path d="M16.2 4.8a3.1 3.1 0 010 5.6"/><path d="M18.3 19.5c0-2.3-1-4-2.5-4.9"/>',
+  baby:'<circle cx="12" cy="6.8" r="3.1"/><path d="M9.2 10.2c1.1 1.3 4.5 1.3 5.6 0"/><path d="M7 14.2c1.4-1 3.1-1.5 5-1.5s3.6.5 5 1.5"/><path d="M8.6 13.6 7.2 20M15.4 13.6 16.8 20"/>',
+  heart:'<path d="M12 20.2C6.5 16.5 3 13.4 3 9.7 3 7.1 5 5.2 7.4 5.2c1.6 0 3 .9 3.7 2.2 .7-1.3 2.1-2.2 3.7-2.2C19 5.2 21 7.1 21 9.7c0 3.7-3.5 6.8-9 10.5z"/>',
+  pulse:'<path d="M3 12h3.8l2-5.5 4 11 2.2-5.5H21"/>',
+  clipboard:'<rect x="6" y="4.5" width="12" height="15.5" rx="2"/><path d="M9.2 4.5V7h5.6V4.5"/><path d="M9 11.5h6M9 15h4"/>',
+  pin:'<path d="M12 21s6-5.4 6-10.2A6 6 0 006 10.8C6 15.6 12 21 12 21z"/><circle cx="12" cy="10.8" r="2.1"/>',
+  briefcase:'<rect x="3.2" y="7.5" width="17.6" height="12" rx="2.2"/><path d="M8.5 7.5V6.2a2 2 0 012-2h3a2 2 0 012 2v1.3"/><path d="M3.2 12.5h17.6"/>',
+  calendar:'<rect x="3.5" y="5.2" width="17" height="14.8" rx="2.2"/><path d="M3.5 9.4h17M8 3.5v3.2M16 3.5v3.2"/>',
+  droplet:'<path d="M12 3.6s5.8 6.2 5.8 10.2A5.8 5.8 0 016.2 13.8C6.2 9.8 12 3.6 12 3.6z"/>',
+  search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.2-4.2"/>',
+  moon:'<path d="M20 14.5A8 8 0 019.5 4 7 7 0 1020 14.5z"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/>',
+  trash:'<path d="M4 7h16M9 7V5a1 1 0 011-1h4a1 1 0 011 1v2M6.5 7l1 13a1 1 0 001 1h7a1 1 0 001-1l1-13M10 11v6M14 11v6"/>'
+};
+function icon(n){ return '<svg viewBox="0 0 24 24">'+(ICONS[n]||'')+'</svg>'; }
+
+/* ---------- render detail ---------- */
+function rowKV(k,v,opts={}){
+  const empty = v==null||v==='';
+  const raw = opts.raw ? `<span class="raw-flag">⚠ "${esc(opts.raw)}"</span>` : '';
+  return `<div class="row"><div class="k">${k}</div><div class="v ${empty?'empty':''}">${empty?'—':esc(v)}${empty&&opts.raw?raw:''}${!empty&&opts.raw?raw:''}</div></div>`;
+}
+function dateRow(k,iso,rawTxt){
+  const f=fmtBR(iso);
+  if(f) return `<div class="row"><div class="k">${k}</div><div class="v">${f}${rawTxt&&!/^\d/.test(rawTxt)?'':''}</div></div>`;
+  return `<div class="row"><div class="k">${k}</div><div class="v ${rawTxt?'':'empty'}">${rawTxt?esc(rawTxt)+' <span class="raw-flag">⚠ conferir</span>':'—'}</div></div>`;
+}
+function openDetail(id){
+  const p=P.find(x=>String(x.id)===String(id)); if(!p) return;
+  const g=ig(p), st=status(p), id_=idade(p.nascimento), dpp=dppEff(p), cid=(p.cidade||cidade(p.endereco)), b=bornInfo(p);
+  const waTxt=encodeURIComponent('Olá '+nameCase((p.nome||'').split(' ')[0])+'! Aqui é a Vanessa 💚');
+  const comorb = (p.comorbidades&&p.comorbidades.length)
+    ? `<div class="tags">${p.comorbidades.map(c=>`<span class="tag alert">${esc(c)}</span>`).join('')}</div>` : null;
+
+  document.getElementById('detailView').innerHTML = `
+    <div class="detail-head">
+      <div class="back-row"><button class="back-btn" id="backBtn">‹ Voltar</button></div>
+      <div class="dh-main">
+        <div class="avatar" style="background:${avatarColor(p.nome)}">${initials(p.nome)}</div>
+        <div>
+          <div class="dh-name">${esc(nameCase(p.nome))}</div>
+          <div class="dh-meta">${[id_?id_+' anos':null,cid,p.gestacoes?nameCase(p.gestacoes)+' gestação':null].filter(Boolean).map(esc).join(' · ')}</div>
+        </div>
+      </div>
+      <div class="actions">
+        ${p.whatsappRaw?`<a class="act wa" href="https://wa.me/${p.whatsappRaw}?text=${waTxt}" target="_blank"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.8.8.8-2.7-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8s-.4-.1-.5.1l-.7.9c-.1.2-.3.2-.5.1a6.6 6.6 0 01-1.9-1.2 7.3 7.3 0 01-1.4-1.7c-.1-.2 0-.4.1-.5l.4-.4.2-.4v-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 00-.7.3A2.8 2.8 0 006 8.8c0 1.7 1.2 3.3 1.4 3.5s2.4 3.7 5.8 5.1c2.9 1.1 2.9.8 3.4.7s1.4-.6 1.6-1.1.2-1 .1-1.1z"/></svg> WhatsApp</a>`:''}
+        ${p.acompWppRaw?`<a class="act" href="https://wa.me/${p.acompWppRaw}" target="_blank">${icon('users')} Acompanhante</a>`:''}
+      </div>
+    </div>
+
+    ${dpp||g?`<div class="hl">
+      <div class="cell"><div class="k">Idade gestacional</div><div class="v">${g?g.sem+'<small>s</small> '+g.dia+'<small>d</small>':'—'}</div><div class="cd">${g?(trimestre(p)+'º trimestre'):(st.key==='fim'?'bebê já nasceu':'sem data de referência')}</div></div>
+      <div class="cell"><div class="k">Data provável do parto</div><div class="v">${dpp?fmtBR(dpp):'—'}</div><div class="cd">${countdown(p)||''}</div></div>
+    </div>`:''}
+
+    <div class="born">${ b
+      ? `<div class="born-done">
+           <div class="bd-head"><span class="sec-ic ok">${icon('baby')}</span><div><b>Nascimento registrado</b><small>Preencha os dados do parto</small></div></div>
+           <div class="bd-field"><span class="lbl">Dia do nascimento</span><input type="date" id="bornDate" value="${b.data||''}"></div>
+           <div class="bd-field"><span class="lbl">Via de parto</span>
+             <div class="via-toggle">
+               <button class="via-opt ${b.via==='Normal'?'sel':''}" data-via="Normal">Normal</button>
+               <button class="via-opt ${b.via==='Cesárea'?'sel':''}" data-via="Cesárea">Cesárea</button>
+             </div>
+           </div>
+           ${b.via==='Cesárea'?`<div class="bd-field"><span class="lbl">Indicação da cesárea</span><textarea id="bornInd" placeholder="Descreva o motivo da cesárea...">${esc(b.indicacao||'')}</textarea></div>`:''}
+           <div class="bd-actions"><button class="born-undo" id="bornUndo">Desfazer nascimento</button></div>
+         </div>`
+      : `<button class="born-btn" id="bornBtn">${icon('baby')} Registrar que o bebê nasceu</button>` }</div>
+
+    <div class="section"><h3><span class="sec-ic">${icon('baby')}</span>Gestação & Bebê</h3><div class="kv">
+      ${rowKV('Nº de gestações', p.gestacoes?nameCase(p.gestacoes):null)}
+      ${rowKV('Nascimentos anteriores', p.nascAnterior?nameCase(p.nascAnterior):null)}
+      ${rowKV('Nome do bebê', p.bebe)}
+      ${rowKV('Sexo', p.sexo)}
+      ${dateRow('DUM (última menstruação)', p.dum, p.dum?null:p.dumRaw)}
+      ${dateRow('DPP pela ultrassonografia', p.dppUltra, p.dppUltra?null:p.dppUltraRaw)}
+      ${dateRow('DPP pela DUM', p.dppDum, p.dppDum?null:p.dppDumRaw)}
+    </div></div>
+
+    <div class="section"><h3><span class="sec-ic">${icon('heart')}</span>Saúde</h3><div class="kv">
+      <div class="row"><div class="k">Tipo sanguíneo</div><div class="v ${p.tipoSanguineo?'':'empty'}">${p.tipoSanguineo?bloodClean(p.tipoSanguineo):'—'}</div></div>
+      <div class="row"><div class="k">Comorbidades</div><div class="v">${comorb||'<span style="color:var(--ok);font-weight:700">Nenhuma</span>'}</div></div>
+      ${rowKV('Outras comorbidades', p.outrasComorb)}
+      ${rowKV('Alergias / intolerâncias', p.alergias)}
+      ${rowKV('Medicação em uso', p.medicacao)}
+    </div></div>
+
+    <div class="section"><h3><span class="sec-ic">${icon('clipboard')}</span>Pré-natal</h3><div class="kv">
+      ${rowKV('Médico(a) do pré-natal', p.medico)}
+      ${rowKV('Maternidade escolhida', p.maternidade)}
+    </div></div>
+
+    <div class="section"><h3><span class="sec-ic">${icon('pin')}</span>Contato & Endereço</h3><div class="kv">
+      ${rowKV('WhatsApp', p.whatsapp)}
+      ${rowKV('E-mail', p.email)}
+      ${rowKV('Endereço', p.endereco)}
+      ${rowKV('CPF', p.cpf)}
+      ${rowKV('RG', p.rg)}
+      ${rowKV('Nascimento', fmtBR(p.nascimento))}
+    </div></div>
+
+    <div class="section"><h3><span class="sec-ic">${icon('users')}</span>Acompanhante no parto</h3><div class="kv">
+      ${rowKV('Tipo', p.acompTipo?nameCase(p.acompTipo):null)}
+      ${rowKV('Nome', p.acompNome)}
+      ${rowKV('WhatsApp', p.acompWpp)}
+    </div></div>
+
+    <div class="section"><h3><span class="sec-ic">${icon('briefcase')}</span>Comercial</h3><div class="kv">
+      ${rowKV('Pacote escolhido', p.pacote?nameCase(p.pacote):null)}
+      ${rowKV('Cadastro', fmtBR(p.carimbo))}
+    </div></div>
+
+    <div class="section"><button class="del-btn" id="delBtn">${icon('trash')} Excluir paciente</button></div>
+    <div style="height:30px"></div>
+  `;
+  document.getElementById('backBtn').onclick=()=>showView('pacientes');
+  const reopen=()=>{ const y=window.scrollY; openDetail(p.id); window.scrollTo(0,y); };
+  const bb=document.getElementById('bornBtn'); if(bb) bb.onclick=()=>{ setBorn(p.id, isoOf(TODAY)); renderChips(); renderList(); openDetail(p.id); };
+  const bu=document.getElementById('bornUndo'); if(bu) bu.onclick=()=>{ setBorn(p.id, null); renderChips(); renderList(); openDetail(p.id); };
+  const bd=document.getElementById('bornDate'); if(bd) bd.onchange=e=>{ if(e.target.value){ updBorn(p.id,'data',e.target.value); renderList(); } };
+  document.querySelectorAll('#detailView .via-opt').forEach(el=>el.onclick=()=>{ updBorn(p.id,'via',el.dataset.via); renderList(); reopen(); });
+  const bi=document.getElementById('bornInd'); if(bi) bi.oninput=e=>updBorn(p.id,'indicacao',e.target.value);
+  const del=document.getElementById('delBtn'); if(del) del.onclick=()=>{ if(confirm('Excluir '+nameCase(p.nome)+' definitivamente?\n\nEsta ação não pode ser desfeita.')) deletePaciente(p.id); };
+  showView('detail');
+  window.scrollTo(0,0);
+}
+
+/* ---------- views ---------- */
+function showView(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  document.getElementById(v+'View').classList.add('active');
+  const tabsVisible = v==='pacientes'||v==='painel';
+  document.getElementById('tabsBar').style.display = tabsVisible?'flex':'none';
+  document.querySelector('.hero').style.display = (v==='detail'||v==='cadastro')?'none':'block';
+  const fab=document.getElementById('fabNovo'); if(fab) fab.style.display = (v==='pacientes')?'grid':'none';
+  if(v==='pacientes'||v==='painel'){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===v));
+  }
+  if(v==='painel') setTimeout(renderDash,50);
+}
+
+/* ---------- dashboard ---------- */
+let charts={}, dlRegistered=false, DL_INK='#2C2530', DL_LINE='#B0A4AC';
+// Plugin: rótulos de rosca — % dentro das fatias grandes, e fora (com linha-guia) nas finas. Todos aparecem.
+const outsideLabels = {
+  id:'outsideLabels',
+  afterDatasetsDraw(chart){
+    if(chart.config.type!=='doughnut' || !chart.options.plugins.outsideLabels) return;
+    const ctx=chart.ctx, meta=chart.getDatasetMeta(0), data=chart.data.datasets[0].data;
+    const total=data.reduce((a,b)=>a+(+b||0),0)||1;
+    const sides={left:[],right:[]};
+    ctx.save(); ctx.font='700 12px Montserrat';
+    meta.data.forEach((arc,i)=>{
+      const v=+data[i]; if(!v) return;
+      const pct=Math.round(v/total*100);
+      const mid=(arc.startAngle+arc.endAngle)/2, cos=Math.cos(mid), sin=Math.sin(mid);
+      if(pct>=8){
+        const r=(arc.innerRadius+arc.outerRadius)/2;
+        ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(pct+'%', arc.x+cos*r, arc.y+sin*r);
+      } else {
+        sides[cos>=0?'right':'left'].push({x:arc.x,y:arc.y,cos,sin,pct,outer:arc.outerRadius});
+      }
+    });
+    ['left','right'].forEach(side=>{
+      const dir=side==='right'?1:-1, arr=sides[side];
+      arr.sort((a,b)=>(a.y+a.sin*a.outer)-(b.y+b.sin*b.outer));
+      let lastY=-1e9; const gap=14;
+      arr.forEach(o=>{
+        const ax=o.x+o.cos*o.outer, ay=o.y+o.sin*o.outer;   // ponto na fatia
+        let ly=o.y+o.sin*(o.outer+11);                       // y do cotovelo
+        if(ly-lastY<gap) ly=lastY+gap; lastY=ly;
+        const ex=o.x+o.cos*(o.outer+11);                     // x do cotovelo
+        const lx=o.x+dir*(o.outer+18);                       // x do rótulo
+        ctx.strokeStyle=DL_LINE; ctx.lineWidth=1;
+        ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(ex,ly); ctx.lineTo(lx,ly); ctx.stroke();
+        ctx.fillStyle=DL_INK; ctx.textBaseline='middle'; ctx.textAlign=side==='right'?'left':'right';
+        ctx.fillText(o.pct+'%', lx+dir*3, ly);
+      });
+    });
+    ctx.restore();
+  }
+};
+const ROSE='#A13E6D', ROSE_L='#CA6796', ROSE_D='#7E2E54';
+const ROSE_PAL=['#A13E6D','#CA6796','#7E2E54','#D583AC','#933D69','#E0A9C6','#B85588','#F0C4DA'];
+function renderDash(){
+  if(!dlRegistered && window.ChartDataLabels){ Chart.register(ChartDataLabels); Chart.register(outsideLabels); dlRegistered=true; }
+  const total=P.length;
+  const prox=P.filter(p=>status(p).key==='prox').length;
+  const ativa=P.filter(p=>['ativa','prox'].includes(status(p).key)).length;
+  const fim=P.filter(p=>status(p).key==='fim').length;
+  document.getElementById('kpis').innerHTML=`
+    <div class="kpi"><div class="k">Total de pacientes</div><div class="v">${total}</div><div class="m">cadastradas</div></div>
+    <div class="kpi"><div class="k">Gestantes ativas</div><div class="v ok">${ativa}</div><div class="m">acompanhamento</div></div>
+    <div class="kpi"><div class="k">Partos próximos</div><div class="v warn">${prox}</div><div class="m">nos próximos 30 dias</div></div>
+    <div class="kpi"><div class="k">Concluídas</div><div class="v rose">${fim}</div><div class="m">DPP já passou</div></div>`;
+
+  const css=getComputedStyle(document.documentElement);
+  const ink=css.getPropertyValue('--ink').trim(), surface=css.getPropertyValue('--surface').trim();
+  DL_INK=ink; DL_LINE=css.getPropertyValue('--ink3').trim();
+  Chart.defaults.font.family='Montserrat'; Chart.defaults.color=css.getPropertyValue('--ink2').trim();
+  Object.values(charts).forEach(c=>c&&c.destroy()); charts={};
+
+  const barLabels={anchor:'end',align:'end',offset:1,color:ink,font:{weight:'700',size:12},formatter:v=>v||''};
+  const noAxis={x:{grid:{display:false},ticks:{font:{size:11}}},y:{display:false}};
+
+  // Partos por mês (DPP) — barras, sem eixo Y, com rótulos
+  const monthMap={};
+  P.forEach(p=>{ const d=dppEff(p); if(d){ const dt=parseISO(d); const key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'); monthMap[key]=(monthMap[key]||0)+1; }});
+  const keys=Object.keys(monthMap).sort();
+  let labels=[],data=[];
+  if(keys.length){
+    const [y0,m0]=keys[0].split('-').map(Number); const [y1,m1]=keys[keys.length-1].split('-').map(Number);
+    let y=y0,m=m0; while(y<y1||(y===y1&&m<=m1)){ const k=y+'-'+String(m).padStart(2,'0'); labels.push(MESES[m-1]+'/'+String(y).slice(2)); data.push(monthMap[k]||0); m++; if(m>12){m=1;y++;} }
+  }
+  charts.mes=new Chart(document.getElementById('chMes'),{type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:ROSE,borderRadius:7,maxBarThickness:40}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
+      plugins:{legend:{display:false},datalabels:barLabels},scales:noAxis}});
+
+  donut('chPacote', groupBy(p=>p.pacote?nameCase(p.pacote):'Não informado'));
+  donut('chSangue', groupBy(p=>p.tipoSanguineo?bloodClean(p.tipoSanguineo):'—'));
+
+  // Trimestre → gauges (só gestantes ativas)
+  const ativas=P.filter(p=>['ativa','prox'].includes(status(p).key));
+  const totT=ativas.length||1;
+  buildGauges('gaugeTri',[
+    {label:'1º trimestre',value:ativas.filter(p=>trimestre(p)===1).length,total:totT,color:ROSE_L},
+    {label:'2º trimestre',value:ativas.filter(p=>trimestre(p)===2).length,total:totT,color:ROSE},
+    {label:'3º trimestre',value:ativas.filter(p=>trimestre(p)===3).length,total:totT,color:ROSE_D},
+  ]);
+
+  // Tipo de parto (só nascidos com via informada)
+  const born=P.filter(p=>bornInfo(p)), wv=born.filter(p=>bornInfo(p).via);
+  if(wv.length){
+    buildGauges('gaugeVia',[
+      {label:'Normal',value:wv.filter(p=>bornInfo(p).via==='Normal').length,total:wv.length,color:ROSE_L},
+      {label:'Cesárea',value:wv.filter(p=>bornInfo(p).via==='Cesárea').length,total:wv.length,color:ROSE_D},
+    ]);
+  } else {
+    document.getElementById('gaugeVia').innerHTML='<div style="padding:26px 16px;text-align:center;color:var(--ink3);font-size:12.5px;line-height:1.5">Ainda sem partos registrados com a via informada.<br>Marque o nascimento no card da paciente.</div>';
+  }
+
+  // Comorbidades — barras horizontais, sem eixo X, com rótulos
+  const cm={}; P.forEach(p=>(p.comorbidades||[]).forEach(c=>{const k=nameCase(c);cm[k]=(cm[k]||0)+1;}));
+  const cmE=Object.entries(cm).sort((a,b)=>b[1]-a[1]);
+  charts.comorb=new Chart(document.getElementById('chComorb'),{type:'bar',
+    data:{labels:cmE.map(e=>e[0]),datasets:[{data:cmE.map(e=>e[1]),backgroundColor:ROSE_L,borderRadius:7,maxBarThickness:26}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:22}},
+      plugins:{legend:{display:false},datalabels:{anchor:'end',align:'end',offset:2,color:ink,font:{weight:'700',size:12},formatter:v=>v||''}},
+      scales:{x:{display:false},y:{grid:{display:false},ticks:{font:{size:11.5,weight:'600'}}}}}});
+}
+function groupBy(fn){ const m={}; P.forEach(p=>{const k=fn(p);m[k]=(m[k]||0)+1;}); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+function buildGauges(id,items){
+  document.getElementById(id).innerHTML=items.map(it=>{
+    const p=it.total?Math.round(it.value/it.total*100):0;
+    return `<div class="gauge"><div class="ring" style="--gc:${it.color};--gp:${p}"><span class="num">${p}%</span></div>
+      <div class="glabel">${it.label}</div><div class="gsub">${it.value} paciente${it.value===1?'':'s'}</div></div>`;
+  }).join('');
+}
+function donut(id,entries){
+  const surface=getComputedStyle(document.documentElement).getPropertyValue('--surface').trim();
+  charts[id]=new Chart(document.getElementById(id),{type:'doughnut',
+    data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:ROSE_PAL,borderWidth:1.5,borderColor:surface}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'58%',
+      layout:{padding:{left:38,right:38,top:20,bottom:2}},
+      plugins:{
+        outsideLabels:true,
+        datalabels:{display:false},
+        legend:{position:'bottom',labels:{boxWidth:11,boxHeight:11,padding:9,font:{size:11},usePointStyle:true,pointStyle:'circle'}}
+      }}});
+}
+
+/* ---------- theme ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeBtn').innerHTML = icon(t==='dark'?'sun':'moon');
+  document.querySelector('meta[name=theme-color]').setAttribute('content', t==='dark'?'#1E3527':'#DDF3E6');
+  localStorage.setItem('mimo_theme',t);
+  if(document.getElementById('painelView').classList.contains('active')) setTimeout(renderDash,50);
+}
+
+/* ================= Supabase: mapear / carregar / importar ================= */
+function waDigits(f){ if(!f) return ''; let d=(''+f).replace(/\D/g,''); if(d.length===10||d.length===11) return '55'+d; if(d.length>=12) return d; return ''; }
+function composeEndereco(r){
+  if(r.logradouro||r.bairro||r.cidade){
+    const l1=[r.logradouro,r.numero].filter(Boolean).join(', ');
+    const l2=[r.bairro,[r.cidade,r.uf].filter(Boolean).join('/')].filter(Boolean).join(' - ');
+    return [l1,r.complemento,l2].filter(Boolean).join(', ');
+  }
+  return r.endereco_texto||null;
+}
+function mapFromDB(r){
+  const g=r.legado||{};
+  return {
+    id:r.id, carimbo:r.criado_em?(''+r.criado_em).slice(0,10):null,
+    nome:r.nome, nascimento:r.data_nascimento, nascimentoRaw:g.nascimentoRaw||null,
+    rg:r.rg, cpf:r.cpf, endereco:composeEndereco(r), cidade:r.cidade||null,
+    whatsapp:r.whatsapp, whatsappRaw:waDigits(r.whatsapp), email:r.email,
+    acompTipo:r.acomp_tipo, acompNome:r.acomp_nome, acompWpp:r.acomp_whatsapp, acompWppRaw:waDigits(r.acomp_whatsapp),
+    bebe:r.bebe_nome, sexo:r.sexo, gestacoes:r.gestacoes,
+    dum:r.dum, dumRaw:g.dumRaw||null, dppDum:r.dpp_dum, dppDumRaw:g.dppDumRaw||null, dppUltra:r.dpp_ultra, dppUltraRaw:g.dppUltraRaw||null,
+    nascAnterior:r.nasc_anterior, medico:r.medico, maternidade:r.maternidade,
+    tipoSanguineo:r.tipo_sanguineo, comorbidades:r.comorbidades||[], outrasComorb:r.outras_comorbidades,
+    alergias:r.alergias, medicacao:r.medicacao, pacote:r.pacote, pagamento:r.pagamento,
+    nasceu:r.nasceu, data_parto:r.data_parto, via_parto:r.via_parto, indicacao_cesarea:r.indicacao_cesarea
+  };
+}
+async function deletePaciente(id){
+  if(ONLINE){ const {error}=await sb.from('mimo_pacientes').delete().eq('id',id); if(error){ toast('Erro ao excluir: '+error.message); return; } }
+  P=P.filter(p=>String(p.id)!==String(id));
+  renderChips(); renderList(); showView('pacientes'); toast('Paciente excluída');
+}
+async function loadPacientes(){
+  if(!ONLINE){ P=(window.PACIENTES||[]); renderChips(); renderList(); return; }
+  const {data,error}=await sb.from('mimo_pacientes').select('*').order('nome');
+  if(error){ toast('Erro ao carregar: '+error.message); return; }
+  P=(data||[]).map(mapFromDB);
+  renderChips(); renderList(); renderImportBanner();
+}
+function renderImportBanner(){
+  const host=document.getElementById('importBanner'); if(!host) return;
+  if(ONLINE && P.length===0 && (window.PACIENTES||[]).length){
+    host.innerHTML='<div class="import-banner"><div><b>Banco vazio</b>Importar as 60 pacientes já cadastradas no Forms?</div><button id="btnImport">Importar 60</button></div>';
+    host.querySelector('#btnImport').onclick=e=>importarSeed(e.target);
+  } else host.innerHTML='';
+}
+async function importarSeed(btn){
+  if(!ONLINE) return;
+  btn.disabled=true; btn.textContent='Importando...';
+  const rows=(window.PACIENTES||[]).map(p=>({
+    criado_em:p.carimbo||null, nome:p.nome, data_nascimento:p.nascimento, rg:p.rg, cpf:p.cpf,
+    endereco_texto:p.endereco, whatsapp:p.whatsapp, email:p.email,
+    acomp_tipo:p.acompTipo, acomp_nome:p.acompNome, acomp_whatsapp:p.acompWpp,
+    bebe_nome:p.bebe, sexo:p.sexo, gestacoes:p.gestacoes,
+    dum:p.dum, dpp_dum:p.dppDum, dpp_ultra:p.dppUltra, nasc_anterior:p.nascAnterior,
+    medico:p.medico, maternidade:p.maternidade, tipo_sanguineo:p.tipoSanguineo,
+    comorbidades:p.comorbidades||[], outras_comorbidades:p.outrasComorb, alergias:p.alergias,
+    medicacao:p.medicacao, pacote:p.pacote, pagamento:p.pagamento,
+    legado:{nascimentoRaw:p.nascimentoRaw,dumRaw:p.dumRaw,dppDumRaw:p.dppDumRaw,dppUltraRaw:p.dppUltraRaw,whatsappRaw:p.whatsappRaw,acompWppRaw:p.acompWppRaw,origem:'Google Forms'}
+  }));
+  const {error}=await sb.from('mimo_pacientes').insert(rows);
+  if(error){ toast('Erro na importação: '+error.message); btn.disabled=false; btn.textContent='Importar 60'; return; }
+  toast('60 pacientes importadas!'); await loadPacientes();
+}
+
+/* ================= Auth ================= */
+async function doLogin(email,pass){ const {error}=await sb.auth.signInWithPassword({email,password:pass}); return error; }
+async function checkSession(){ if(!ONLINE) return true; const {data}=await sb.auth.getSession(); return !!(data&&data.session); }
+function showLogin(show){
+  document.getElementById('loginView').style.display=show?'block':'none';
+  document.querySelector('.hero').style.display=show?'none':'block';
+  document.getElementById('tabsBar').style.display=show?'none':'flex';
+  const fab=document.getElementById('fabNovo'); if(fab) fab.style.display=show?'none':'grid';
+  document.getElementById('logoutBtn').style.display=(!show&&ONLINE)?'block':'none';
+}
+async function bootApp(){ showLogin(false); showView('pacientes'); await loadPacientes(); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* ================= Questionário (novo cadastro) ================= */
+const OPT_SEXO=['Feminino','Masculino','Não sei'], OPT_GEST=['Primeira','Segunda','Terceira ou mais'];
+const OPT_ACOMP=['Esposo(a)','Mãe','Outros'], OPT_NASCANT=['Nenhum','Parto normal','Cesárea','Aborto'];
+const OPT_SANGUE=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+const OPT_COMORB=['Pressão alta','Diabetes / Diabetes gestacional','Hipotireoidismo','Anemia','Trombofilia','Infecção urinária de repetição'];
+const OPT_PACOTE=['Pacote Completo','Pacote Essencial'];
+function segHtml(id,opts){ return `<div class="seg" id="${id}">${opts.map(o=>`<button type="button" class="opt" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`; }
+function renderCadastro(){
+  const v=document.getElementById('cadastroView');
+  v.innerHTML=`
+    <div class="form-head">
+      <button class="back-btn" id="cadBack">‹ Cancelar</button>
+      <h2>Nova paciente</h2><p>Campos com * são obrigatórios</p>
+    </div>
+    <form id="cadForm" autocomplete="off">
+      <div class="fsection"><h3><span class="sec-ic">${icon('users')}</span>Identificação</h3><div class="fcard">
+        <div class="field"><label>Nome completo <span class="req">*</span></label><input id="f_nome"><div class="hint">Fica em MAIÚSCULO automaticamente</div></div>
+        <div class="grid2">
+          <div class="field"><label>Data de nascimento</label><input type="date" id="f_nasc"></div>
+          <div class="field"><label>CPF <span class="req">*</span></label><input id="f_cpf" inputmode="numeric" placeholder="000.000.000-00"></div>
+        </div>
+        <div class="field"><label>RG</label><input id="f_rg"></div>
+      </div></div>
+      <div class="fsection"><h3><span class="sec-ic">${icon('pin')}</span>Endereço</h3><div class="fcard">
+        <div class="field"><label>CEP <span class="req">*</span></label><input id="f_cep" inputmode="numeric" placeholder="00000-000"><div class="cep-msg" id="cepMsg"></div></div>
+        <div class="grid2">
+          <div class="field"><label>Cidade</label><input id="f_cidade" disabled></div>
+          <div class="field"><label>UF</label><input id="f_uf" disabled></div>
+        </div>
+        <div class="field"><label>Bairro</label><input id="f_bairro" disabled></div>
+        <div class="field"><label>Logradouro</label><input id="f_logr" disabled></div>
+        <div class="grid2">
+          <div class="field"><label>Número <span class="req">*</span></label><input id="f_num" inputmode="numeric"></div>
+          <div class="field"><label>Complemento</label><input id="f_compl"></div>
+        </div>
+      </div></div>
+      <div class="fsection"><h3><span class="sec-ic">${icon('pin')}</span>Contato</h3><div class="fcard">
+        <div class="field"><label>WhatsApp <span class="req">*</span></label><input id="f_wpp" inputmode="numeric" placeholder="(00) 0 0000-0000"></div>
+        <div class="field"><label>E-mail</label><input type="email" id="f_email"></div>
+      </div></div>
+      <div class="fsection"><h3><span class="sec-ic">${icon('users')}</span>Acompanhante no parto</h3><div class="fcard">
+        <div class="field"><label>Tipo</label>${segHtml('seg_acomp',OPT_ACOMP)}</div>
+        <div class="field"><label>Nome do acompanhante <span class="req">*</span></label><input id="f_acompnome"></div>
+        <div class="field"><label>WhatsApp do acompanhante</label><input id="f_acompwpp" inputmode="numeric" placeholder="(00) 0 0000-0000"></div>
+      </div></div>
+      <div class="fsection"><h3><span class="sec-ic">${icon('baby')}</span>Bebê & Gestação</h3><div class="fcard">
+        <div class="field"><label>Nome do bebê</label><input id="f_bebe"></div>
+        <div class="field"><label>Sexo</label>${segHtml('seg_sexo',OPT_SEXO)}</div>
+        <div class="field"><label>Número de gestações</label>${segHtml('seg_gest',OPT_GEST)}</div>
+        <div class="grid2">
+          <div class="field"><label>DUM (últ. menstruação)</label><input type="date" id="f_dum"></div>
+          <div class="field"><label>DPP pela ultrassom</label><input type="date" id="f_dppu"></div>
+        </div>
+        <div class="field"><label>DPP pela DUM</label><input type="date" id="f_dppd"></div>
+        <div class="field"><label>Nascimentos anteriores</label>${segHtml('seg_nascant',OPT_NASCANT)}</div>
+      </div></div>
+      <div class="fsection"><h3><span class="sec-ic">${icon('clipboard')}</span>Pré-natal</h3><div class="fcard">
+        <div class="field"><label>Médico(a) do pré-natal</label><input id="f_medico"></div>
+        <div class="field"><label>Maternidade escolhida</label><input id="f_matern"></div>
+      </div></div>
+      <div class="fsection"><h3><span class="sec-ic">${icon('heart')}</span>Saúde</h3><div class="fcard">
+        <div class="field"><label>Tipo sanguíneo</label><select id="f_sangue"><option value="">—</option>${OPT_SANGUE.map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div class="field"><label>Comorbidades</label><div class="checks" id="chk_comorb">${OPT_COMORB.map(o=>`<button type="button" class="ck" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>
+        <div class="field"><label>Outras comorbidades</label><input id="f_outrascomorb"></div>
+        <div class="field"><label>Alergias / intolerâncias</label><input id="f_alergias"></div>
+        <div class="field"><label>Medicação em uso</label><input id="f_medic"></div>
+      </div></div>
+      <div class="fsection"><h3><span class="sec-ic">${icon('briefcase')}</span>Comercial</h3><div class="fcard">
+        <div class="field"><label>Pacote</label>${segHtml('seg_pacote',OPT_PACOTE)}</div>
+      </div></div>
+      <div class="form-submit"><button type="submit" id="cadSubmit">Salvar cadastro</button></div>
+    </form>`;
+  wireCadastro();
+  showView('cadastro');
+  window.scrollTo(0,0);
+}
+function upcase(el){ if(!el) return; el.addEventListener('input',()=>{ const s=el.selectionStart; el.value=el.value.toUpperCase(); try{el.setSelectionRange(s,s);}catch(e){} }); }
+function seg(id){ const el=document.getElementById(id); if(!el) return; el.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{ el.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel')); o.classList.add('sel'); }); }
+function segVal(id){ const s=document.querySelector('#'+id+' .opt.sel'); return s?s.dataset.v:''; }
+function maskCPF(el){ el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0,11); el.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); }; }
+function maskFone(el){ el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0,11); if(d.length<=10){ el.value=d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{4})(\d)/,'$1-$2'); } else { el.value=d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{1})(\d{4})(\d)/,'$1 $2-$3'); } }; }
+function maskCEP(el){ el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0,8); el.value=d.replace(/(\d{5})(\d)/,'$1-$2'); }; }
+function wireCadastro(){
+  document.getElementById('cadBack').onclick=()=>showView('pacientes');
+  ['f_nome','f_acompnome','f_bebe','f_medico','f_matern'].forEach(id=>upcase(document.getElementById(id)));
+  maskCPF(document.getElementById('f_cpf')); maskFone(document.getElementById('f_wpp')); maskFone(document.getElementById('f_acompwpp')); maskCEP(document.getElementById('f_cep'));
+  ['seg_acomp','seg_sexo','seg_gest','seg_nascant','seg_pacote'].forEach(seg);
+  document.querySelectorAll('#chk_comorb .ck').forEach(b=>b.onclick=()=>b.classList.toggle('sel'));
+  const cep=document.getElementById('f_cep');
+  cep.addEventListener('input',()=>{ if(cep.value.replace(/\D/g,'').length===8) buscaCep(); });
+  cep.addEventListener('blur',buscaCep);
+  document.getElementById('cadForm').onsubmit=submitCadastro;
+}
+async function buscaCep(){
+  const el=document.getElementById('f_cep'), msg=document.getElementById('cepMsg');
+  const cep=el.value.replace(/\D/g,''); if(cep.length!==8) return;
+  msg.className='cep-msg load'; msg.textContent='Buscando CEP...';
+  try{
+    const r=await fetch('https://viacep.com.br/ws/'+cep+'/json/'); const d=await r.json();
+    if(d.erro){ msg.className='cep-msg bad'; msg.textContent='CEP não encontrado — confira'; return; }
+    // cidade/UF sempre travadas (do CEP). Rua/bairro: trava se o CEP trouxer; libera p/ digitar se vier vazio.
+    const setF=(id,val)=>{ const el=document.getElementById(id); el.value=val||''; el.disabled=!!val; };
+    setF('f_cidade',d.localidade); setF('f_uf',d.uf); setF('f_bairro',d.bairro); setF('f_logr',d.logradouro);
+    const faltaRua=!d.logradouro;
+    msg.className='cep-msg ok';
+    msg.textContent=d.localidade+'/'+d.uf+(faltaRua?' — preencha rua, bairro e número':' — agora preencha o número');
+    document.getElementById(faltaRua?'f_logr':'f_num').focus();
+  }catch(e){ msg.className='cep-msg bad'; msg.textContent='Erro ao buscar CEP'; }
+}
+function fval(id){ return (document.getElementById(id).value||'').trim(); }
+async function submitCadastro(e){
+  e.preventDefault();
+  const reqs=['f_nome','f_cpf','f_cep','f_num','f_wpp','f_acompnome'];
+  let ok=true;
+  reqs.forEach(fid=>{ const el=document.getElementById(fid), fld=el.closest('.field'); if(!el.value.trim()){ fld&&fld.classList.add('err'); ok=false; } else fld&&fld.classList.remove('err'); });
+  if(!ok){ toast('Preencha os campos obrigatórios (*)'); return; }
+  const btn=document.getElementById('cadSubmit'); btn.disabled=true; btn.textContent='Salvando...';
+  const comorb=[...document.querySelectorAll('#chk_comorb .ck.sel')].map(b=>b.dataset.v);
+  const row={
+    nome:fval('f_nome').toUpperCase(), data_nascimento:fval('f_nasc'), rg:fval('f_rg'), cpf:fval('f_cpf'),
+    cep:fval('f_cep'), logradouro:fval('f_logr'), numero:fval('f_num'), complemento:fval('f_compl'),
+    bairro:fval('f_bairro'), cidade:fval('f_cidade'), uf:fval('f_uf'),
+    whatsapp:fval('f_wpp'), email:fval('f_email'),
+    acomp_tipo:segVal('seg_acomp'), acomp_nome:fval('f_acompnome'), acomp_whatsapp:fval('f_acompwpp'),
+    bebe_nome:fval('f_bebe'), sexo:segVal('seg_sexo'), gestacoes:segVal('seg_gest'),
+    dum:fval('f_dum'), dpp_dum:fval('f_dppd'), dpp_ultra:fval('f_dppu'), nasc_anterior:segVal('seg_nascant'),
+    medico:fval('f_medico'), maternidade:fval('f_matern'),
+    tipo_sanguineo:document.getElementById('f_sangue').value, comorbidades:comorb,
+    outras_comorbidades:fval('f_outrascomorb'), alergias:fval('f_alergias'), medicacao:fval('f_medic'),
+    pacote:segVal('seg_pacote')
+  };
+  Object.keys(row).forEach(k=>{ if(row[k]==='') row[k]=null; });
+  try{
+    if(ONLINE){ const {error}=await sb.from('mimo_pacientes').insert(row); if(error) throw error; await loadPacientes(); }
+    else { row.id=Math.max(0,...P.map(p=>p.id||0))+1; row.comorbidades=comorb; P.push(mapFromDB(row)); renderChips(); renderList(); }
+    toast('Cadastro salvo!'); showView('pacientes');
+  }catch(err){ toast('Erro ao salvar: '+err.message); btn.disabled=false; btn.textContent='Salvar cadastro'; }
+}
+
+/* ---------- events ---------- */
+document.getElementById('themeBtn').onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+document.getElementById('tabsBar').onclick=e=>{ const t=e.target.closest('.tab'); if(t)showView(t.dataset.tab); };
+document.getElementById('filterChips').onclick=e=>{ const c=e.target.closest('.chip'); if(c){filter=c.dataset.f;renderChips();renderList();} };
+document.getElementById('plist').onclick=e=>{ const c=e.target.closest('.pcard'); if(c)openDetail(c.dataset.id); };
+document.getElementById('searchInput').oninput=e=>{ term=e.target.value.trim(); renderList(); };
+
+/* ---------- init ---------- */
+document.querySelectorAll('.sec-ic[data-ic]').forEach(s=>s.innerHTML=icon(s.dataset.ic));
+applyTheme(localStorage.getItem('mimo_theme')||'dark');
+
+document.getElementById('fabNovo').onclick=renderCadastro;
+document.getElementById('loginForm').onsubmit=async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('loginBtn'), err=document.getElementById('loginErr');
+  err.style.display='none'; btn.disabled=true; btn.textContent='Entrando...';
+  const email=document.getElementById('loginEmail').value.trim(), pass=document.getElementById('loginPass').value;
+  const e2=await doLogin(email,pass);
+  btn.disabled=false; btn.textContent='Entrar';
+  if(e2){ err.textContent='E-mail ou senha inválidos.'; err.style.display='block'; return; }
+  await bootApp();
+};
+document.getElementById('logoutBtn').onclick=async()=>{ if(ONLINE) await sb.auth.signOut(); showLogin(true); };
+
+(async()=>{
+  if(ONLINE){
+    if(await checkSession()) await bootApp();
+    else showLogin(true);
+  } else {
+    showLogin(false); document.getElementById('logoutBtn').style.display='none';
+    P=(window.PACIENTES||[]); renderChips(); renderList();
+  }
+})();
+</script>
+</body>
+</html>

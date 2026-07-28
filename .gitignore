@@ -1,0 +1,4 @@
+data.js
+seed.sql
+*.sql
+.DS_Store
