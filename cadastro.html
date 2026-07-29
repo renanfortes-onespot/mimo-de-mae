@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#A13E6D">
+<title>Mimo de Mãe — Ficha da Gestante</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#FBF6F8; --surface:#FFFFFF; --surface2:#F7EEF2;
+  --rose:#A13E6D; --rose-light:#CA6796; --rose-deep:#7E2E54; --rose-bg:#FBEBF2;
+  --grad:linear-gradient(135deg,#7E2E54 0%,#A13E6D 45%,#CA6796 100%);
+  --mint:#EAF6EF; --mint-deep:#3FB07A; --mint-ink:#2E7D52;
+  --ink:#2C2530; --ink2:#7A6E76; --ink3:#B0A4AC;
+  --line:rgba(44,37,48,.10); --danger:#D4574E; --ok:#2E9E6B;
+  --shadow:0 1px 3px rgba(126,46,84,.06), 0 8px 24px rgba(126,46,84,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Montserrat',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.hero{background:var(--grad);color:#fff;padding:calc(env(safe-area-inset-top) + 26px) 20px 30px;border-radius:0 0 30px 30px;text-align:center;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;top:-40px;right:-30px;width:170px;height:170px;border-radius:50%;background:rgba(255,255,255,.09)}
+.logo{width:76px;height:76px;border-radius:50%;background:#fff;margin:0 auto 14px;display:grid;place-items:center;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,.15);position:relative;z-index:2}
+.logo img{width:80%;height:80%;object-fit:contain}
+.hero h1{font-size:22px;font-weight:800;position:relative;z-index:2}
+.hero .sub{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;opacity:.85;font-weight:600;margin-top:3px;position:relative;z-index:2}
+.hero p{font-size:13px;opacity:.92;margin:14px auto 0;max-width:520px;line-height:1.5;position:relative;z-index:2}
+.wrap{max-width:640px;margin:0 auto;padding:8px 0 40px}
+.fsection{margin:18px 16px}
+.fsection h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--rose);font-weight:700;margin-bottom:11px;padding-left:2px}
+.fcard{background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:15px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.4px}
+.field label .req{color:var(--danger);margin-left:2px}
+.field input,.field select,.field textarea{width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:15px}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--rose);background:#fff}
+.field input:disabled{opacity:.7;background:#fff}
+.field .hint{font-size:10.5px;color:var(--ink3)}
+.field.err input,.field.err select{border-color:var(--danger)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg .opt{flex:1;min-width:88px;padding:11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:13px;text-align:center;transition:.15s}
+.seg .opt.sel{background:var(--rose);color:#fff;border-color:transparent}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks .ck{padding:10px 14px;border-radius:20px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:600;font-size:12.5px;transition:.15s}
+.checks .ck.sel{background:var(--mint);border-color:var(--mint-deep);color:var(--mint-ink)}
+.cep-msg{font-size:11px;font-weight:600;margin-top:2px}
+.cep-msg.ok{color:var(--ok)} .cep-msg.load{color:var(--ink2)} .cep-msg.bad{color:var(--danger)}
+.submit{margin:24px 16px 0}
+.submit button{width:100%;padding:16px;border-radius:15px;background:var(--rose);color:#fff;font-weight:800;font-size:16px;box-shadow:0 8px 20px rgba(126,46,84,.3)}
+.submit button:disabled{opacity:.6}
+.err-top{margin:12px 16px 0;background:#FDECEA;color:#C0453B;padding:11px 14px;border-radius:12px;font-size:12.5px;font-weight:600;text-align:center;display:none}
+.done{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:30px;text-align:center}
+.done .card{max-width:420px;background:var(--surface);border-radius:24px;padding:36px 26px;box-shadow:var(--shadow)}
+.done .em{width:72px;height:72px;border-radius:50%;background:var(--mint);color:var(--mint-deep);display:grid;place-items:center;margin:0 auto 18px;font-size:34px}
+.done h2{font-size:22px;font-weight:800;margin-bottom:10px}
+.done p{color:var(--ink2);font-size:14px;line-height:1.55}
+@media(min-width:820px){ .wrap{max-width:760px} .fsection{margin:18px auto;max-width:720px} }
+</style>
+</head>
+<body>
+
+<div id="formView">
+  <div class="hero">
+    <div class="logo"><img src="./logo.png" alt="Mimo de Mãe"></div>
+    <h1>Mimo de Mãe</h1>
+    <div class="sub">Enf.ª Vanessa Cardinal</div>
+    <p>Esta ficha foi elaborada com muito carinho para garantir um acompanhamento seguro e humanizado da sua gestação. Preencha com calma — leva uns minutinhos. 💚</p>
+  </div>
+
+  <div class="wrap">
+    <div class="err-top" id="errTop"></div>
+    <form id="f" autocomplete="off">
+      <div class="fsection"><h3>Identificação</h3><div class="fcard">
+        <div class="field"><label>Nome completo <span class="req">*</span></label><input id="f_nome"><div class="hint">Fica em MAIÚSCULO automaticamente</div></div>
+        <div class="grid2">
+          <div class="field"><label>Data de nascimento</label><input type="date" id="f_nasc"></div>
+          <div class="field"><label>CPF <span class="req">*</span></label><input id="f_cpf" inputmode="numeric" placeholder="000.000.000-00"></div>
+        </div>
+        <div class="field"><label>RG</label><input id="f_rg"></div>
+      </div></div>
+
+      <div class="fsection"><h3>Endereço</h3><div class="fcard">
+        <div class="field"><label>CEP <span class="req">*</span></label><input id="f_cep" inputmode="numeric" placeholder="00000-000"><div class="cep-msg" id="cepMsg"></div></div>
+        <div class="grid2">
+          <div class="field"><label>Cidade</label><input id="f_cidade" disabled></div>
+          <div class="field"><label>UF</label><input id="f_uf" disabled></div>
+        </div>
+        <div class="field"><label>Bairro</label><input id="f_bairro" disabled></div>
+        <div class="field"><label>Logradouro</label><input id="f_logr" disabled></div>
+        <div class="grid2">
+          <div class="field"><label>Número <span class="req">*</span></label><input id="f_num" inputmode="numeric"></div>
+          <div class="field"><label>Complemento</label><input id="f_compl"></div>
+        </div>
+      </div></div>
+
+      <div class="fsection"><h3>Contato</h3><div class="fcard">
+        <div class="field"><label>WhatsApp <span class="req">*</span></label><input id="f_wpp" inputmode="numeric" placeholder="(00) 0 0000-0000"></div>
+        <div class="field"><label>E-mail</label><input type="email" id="f_email"></div>
+      </div></div>
+
+      <div class="fsection"><h3>Acompanhante no parto</h3><div class="fcard">
+        <div class="field"><label>Tipo</label><div class="seg" id="seg_acomp"></div></div>
+        <div class="field"><label>Nome do acompanhante <span class="req">*</span></label><input id="f_acompnome"></div>
+        <div class="field"><label>WhatsApp do acompanhante</label><input id="f_acompwpp" inputmode="numeric" placeholder="(00) 0 0000-0000"></div>
+      </div></div>
+
+      <div class="fsection"><h3>Bebê & Gestação</h3><div class="fcard">
+        <div class="field"><label>Nome do bebê</label><input id="f_bebe"></div>
+        <div class="field"><label>Sexo</label><div class="seg" id="seg_sexo"></div></div>
+        <div class="field"><label>Número de gestações</label><div class="seg" id="seg_gest"></div></div>
+        <div class="grid2">
+          <div class="field"><label>DUM (últ. menstruação)</label><input type="date" id="f_dum"></div>
+          <div class="field"><label>DPP pela ultrassom</label><input type="date" id="f_dppu"></div>
+        </div>
+        <div class="field"><label>DPP pela DUM</label><input type="date" id="f_dppd"></div>
+        <div class="field"><label>Nascimentos anteriores</label><div class="seg" id="seg_nascant"></div></div>
+      </div></div>
+
+      <div class="fsection"><h3>Pré-natal</h3><div class="fcard">
+        <div class="field"><label>Médico(a) do pré-natal</label><input id="f_medico"></div>
+        <div class="field"><label>Maternidade escolhida</label><input id="f_matern"></div>
+      </div></div>
+
+      <div class="fsection"><h3>Saúde</h3><div class="fcard">
+        <div class="field"><label>Tipo sanguíneo</label><select id="f_sangue"><option value="">—</option></select></div>
+        <div class="field"><label>Comorbidades</label><div class="checks" id="chk_comorb"></div></div>
+        <div class="field"><label>Outras comorbidades</label><input id="f_outrascomorb"></div>
+        <div class="field"><label>Alergias / intolerâncias</label><input id="f_alergias"></div>
+        <div class="field"><label>Medicação em uso</label><input id="f_medic"></div>
+      </div></div>
+
+      <div class="fsection"><h3>Pacote</h3><div class="fcard">
+        <div class="field"><label>Pacote escolhido</label><div class="seg" id="seg_pacote"></div></div>
+      </div></div>
+
+      <div class="submit"><button type="submit" id="submitBtn">Enviar ficha</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="done" id="doneView" hidden>
+  <div class="card">
+    <div class="em">✓</div>
+    <h2>Ficha enviada!</h2>
+    <p>Obrigada por preencher com carinho. 💚<br>A Enf.ª Vanessa vai receber suas informações e falar com você em breve.</p>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://orcctjbosfdtxdfdhnbx.supabase.co';
+const SUPA_KEY='sb_publishable_oNu_rbujM-PNfsfO8Cod5Q_EREIbAbA';
+const sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+
+const OPT_SEXO=['Feminino','Masculino','Não sei'], OPT_GEST=['Primeira','Segunda','Terceira ou mais'];
+const OPT_ACOMP=['Esposo(a)','Mãe','Outros'], OPT_NASCANT=['Nenhum','Parto normal','Cesárea','Aborto'];
+const OPT_SANGUE=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
+const OPT_COMORB=['Pressão alta','Diabetes / Diabetes gestacional','Hipotireoidismo','Anemia','Trombofilia','Infecção urinária de repetição'];
+const OPT_PACOTE=['Pacote Completo','Pacote Essencial'];
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function fillSeg(id,opts){ document.getElementById(id).innerHTML=opts.map(o=>`<button type="button" class="opt" data-v="${esc(o)}">${esc(o)}</button>`).join(''); }
+fillSeg('seg_acomp',OPT_ACOMP); fillSeg('seg_sexo',OPT_SEXO); fillSeg('seg_gest',OPT_GEST); fillSeg('seg_nascant',OPT_NASCANT); fillSeg('seg_pacote',OPT_PACOTE);
+document.getElementById('f_sangue').innerHTML='<option value="">—</option>'+OPT_SANGUE.map(o=>`<option>${o}</option>`).join('');
+document.getElementById('chk_comorb').innerHTML=OPT_COMORB.map(o=>`<button type="button" class="ck" data-v="${esc(o)}">${esc(o)}</button>`).join('');
+
+function upcase(el){ el.addEventListener('input',()=>{ const s=el.selectionStart; el.value=el.value.toUpperCase(); try{el.setSelectionRange(s,s);}catch(e){} }); }
+['f_nome','f_acompnome','f_bebe','f_medico','f_matern'].forEach(id=>upcase(document.getElementById(id)));
+function seg(id){ const el=document.getElementById(id); el.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{ el.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel')); o.classList.add('sel'); }); }
+['seg_acomp','seg_sexo','seg_gest','seg_nascant','seg_pacote'].forEach(seg);
+function segVal(id){ const s=document.querySelector('#'+id+' .opt.sel'); return s?s.dataset.v:''; }
+document.querySelectorAll('#chk_comorb .ck').forEach(b=>b.onclick=()=>b.classList.toggle('sel'));
+
+const mCPF=el=>el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0,11); el.value=d.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); };
+const mFone=el=>el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0,11); if(d.length<=10) el.value=d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{4})(\d)/,'$1-$2'); else el.value=d.replace(/(\d{2})(\d)/,'($1) $2').replace(/(\d{1})(\d{4})(\d)/,'$1 $2-$3'); };
+const mCEP=el=>el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0,8); el.value=d.replace(/(\d{5})(\d)/,'$1-$2'); };
+mCPF(document.getElementById('f_cpf')); mFone(document.getElementById('f_wpp')); mFone(document.getElementById('f_acompwpp')); mCEP(document.getElementById('f_cep'));
+
+const cep=document.getElementById('f_cep');
+cep.addEventListener('input',()=>{ if(cep.value.replace(/\D/g,'').length===8) buscaCep(); });
+cep.addEventListener('blur',buscaCep);
+async function buscaCep(){
+  const msg=document.getElementById('cepMsg'), c=cep.value.replace(/\D/g,''); if(c.length!==8) return;
+  msg.className='cep-msg load'; msg.textContent='Buscando CEP...';
+  try{
+    const r=await fetch('https://viacep.com.br/ws/'+c+'/json/'); const d=await r.json();
+    if(d.erro){ msg.className='cep-msg bad'; msg.textContent='CEP não encontrado — confira'; return; }
+    const setF=(id,val)=>{ const el=document.getElementById(id); el.value=val||''; el.disabled=!!val; };
+    setF('f_cidade',d.localidade); setF('f_uf',d.uf); setF('f_bairro',d.bairro); setF('f_logr',d.logradouro);
+    const faltaRua=!d.logradouro;
+    msg.className='cep-msg ok'; msg.textContent=d.localidade+'/'+d.uf+(faltaRua?' — preencha rua, bairro e número':' — agora o número');
+    document.getElementById(faltaRua?'f_logr':'f_num').focus();
+  }catch(e){ msg.className='cep-msg bad'; msg.textContent='Erro ao buscar CEP'; }
+}
+
+const val=id=>(document.getElementById(id).value||'').trim();
+document.getElementById('f').onsubmit=async e=>{
+  e.preventDefault();
+  const errTop=document.getElementById('errTop'); errTop.style.display='none';
+  const reqs=['f_nome','f_cpf','f_cep','f_num','f_wpp','f_acompnome']; let ok=true;
+  reqs.forEach(fid=>{ const el=document.getElementById(fid), fld=el.closest('.field'); if(!el.value.trim()){ fld.classList.add('err'); ok=false; } else fld.classList.remove('err'); });
+  if(!ok){ errTop.textContent='Por favor, preencha os campos obrigatórios (*).'; errTop.style.display='block'; window.scrollTo({top:0,behavior:'smooth'}); return; }
+  const btn=document.getElementById('submitBtn'); btn.disabled=true; btn.textContent='Enviando...';
+  const comorb=[...document.querySelectorAll('#chk_comorb .ck.sel')].map(b=>b.dataset.v);
+  const row={
+    nome:val('f_nome').toUpperCase(), data_nascimento:val('f_nasc'), rg:val('f_rg'), cpf:val('f_cpf'),
+    cep:val('f_cep'), logradouro:val('f_logr'), numero:val('f_num'), complemento:val('f_compl'),
+    bairro:val('f_bairro'), cidade:val('f_cidade'), uf:val('f_uf'),
+    whatsapp:val('f_wpp'), email:val('f_email'),
+    acomp_tipo:segVal('seg_acomp'), acomp_nome:val('f_acompnome'), acomp_whatsapp:val('f_acompwpp'),
+    bebe_nome:val('f_bebe'), sexo:segVal('seg_sexo'), gestacoes:segVal('seg_gest'),
+    dum:val('f_dum'), dpp_dum:val('f_dppd'), dpp_ultra:val('f_dppu'), nasc_anterior:segVal('seg_nascant'),
+    medico:val('f_medico'), maternidade:val('f_matern'),
+    tipo_sanguineo:document.getElementById('f_sangue').value, comorbidades:comorb,
+    outras_comorbidades:val('f_outrascomorb'), alergias:val('f_alergias'), medicacao:val('f_medic'),
+    pacote:segVal('seg_pacote'),
+    legado:{origem:'Formulário público'}
+  };
+  Object.keys(row).forEach(k=>{ if(row[k]==='') row[k]=null; });
+  const {error}=await sb.from('mimo_pacientes').insert(row);
+  if(error){ errTop.textContent='Ops, não consegui enviar: '+error.message+'. Tente novamente.'; errTop.style.display='block'; btn.disabled=false; btn.textContent='Enviar ficha'; window.scrollTo({top:0,behavior:'smooth'}); return; }
+  document.getElementById('formView').hidden=true;
+  document.getElementById('doneView').hidden=false;
+  window.scrollTo(0,0);
+};
+</script>
+</body>
+</html>
