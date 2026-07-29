@@ -311,6 +311,19 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
   .wrap{padding:12px 12px 30px}
   .chart-card.wide{grid-column:auto}
 }
+
+/* ---------- Desktop: mantém a cara de app, mas em coluna centralizada ---------- */
+@media(min-width:820px){
+  .hero-top, .hero-hi{max-width:760px;margin-left:auto;margin-right:auto}
+  .tabs{max-width:760px;margin-left:auto;margin-right:auto}
+  #pacientesView .wrap{max-width:760px}
+  #detailView{max-width:720px;margin:0 auto;padding-top:22px}
+  #detailView .detail-head{border-radius:26px}
+  #cadastroView{max-width:720px;margin:0 auto;padding-top:22px}
+  #cadastroView .form-head{border-radius:26px}
+  #painelView .wrap{max-width:1060px}
+  .fab{right:max(22px, calc(50% - 372px))}
+}
 </style>
 </head>
 <body>
