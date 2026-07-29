@@ -827,10 +827,14 @@ function renderDash(){
   let labels=[],data=[];
   if(keys.length){
     let [y0,m0]=keys[0].split('-').map(Number); let [ey,em]=keys[keys.length-1].split('-').map(Number);
+    const ty=TODAY.getFullYear(), tm=TODAY.getMonth()+1;
     if(mesModo==='futuro'){
-      const ty=TODAY.getFullYear(), tm=TODAY.getMonth()+1;              // começa no mês atual
-      if(ty>y0||(ty===y0&&tm>m0)){ y0=ty; m0=tm; }
+      if(ty>y0||(ty===y0&&tm>m0)){ y0=ty; m0=tm; }                     // começa no mês atual
       if(y0>ey||(y0===ey&&m0>em)){ ey=y0; em=m0; }                     // garante pelo menos o mês atual
+    } else {                                                            // histórico: últimos 12 meses até o mês atual
+      ey=ty; em=tm;
+      let sm=tm-11, sy=ty; while(sm<=0){ sm+=12; sy--; }
+      y0=sy; m0=sm;
     }
     let y=y0,m=m0; while(y<ey||(y===ey&&m<=em)){ const k=y+'-'+String(m).padStart(2,'0'); labels.push(MESES[m-1]+'/'+String(y).slice(2)); data.push(monthMap[k]||0); m++; if(m>12){m=1;y++;} }
   }
