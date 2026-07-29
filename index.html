@@ -577,11 +577,11 @@ function renderList(){
   if(!list.length){ el.innerHTML='<div class="empty-state">'+icon('search')+'Nenhuma paciente encontrada.</div>'; return; }
   el.innerHTML = list.map(p=>{
     const st=status(p), g=ig(p), id=idade(p.nascimento);
-    const sub=[]; if(g)sub.push(g.sem+'s'+g.dia+'d'); if(id)sub.push(id+' anos'); const cid=cidade(p.endereco); if(cid)sub.push(cid);
+    const sub=[]; if(g)sub.push(g.sem+'s'+g.dia+'d'); if(id)sub.push(id+' anos'); const cid=(p.cidade||cidade(p.endereco)); if(cid)sub.push(cid.toUpperCase());
     return `<button class="pcard" data-id="${p.id}">
       <div class="avatar" style="background:${avatarColor(p.nome)}">${initials(p.nome)}</div>
       <div class="info">
-        <div class="nm">${esc(nameCase(p.nome))}</div>
+        <div class="nm">${esc((p.nome||'').toUpperCase())}</div>
         <div class="sub">${sub.map((s,i)=>(i?'<span class="dot"></span>':'')+esc(s)).join('')}</div>
       </div>
       <div class="right">
@@ -645,8 +645,8 @@ function openDetail(id){
       <div class="dh-main">
         <div class="avatar" style="background:${avatarColor(p.nome)}">${initials(p.nome)}</div>
         <div>
-          <div class="dh-name">${esc(nameCase(p.nome))}</div>
-          <div class="dh-meta">${[id_?id_+' anos':null,cid,p.gestacoes?nameCase(p.gestacoes)+' gestação':null].filter(Boolean).map(esc).join(' · ')}</div>
+          <div class="dh-name">${esc((p.nome||'').toUpperCase())}</div>
+          <div class="dh-meta">${[id_?id_+' anos':null,cid?cid.toUpperCase():null,p.gestacoes?nameCase(p.gestacoes)+' gestação':null].filter(Boolean).map(esc).join(' · ')}</div>
         </div>
       </div>
       <div class="actions">
