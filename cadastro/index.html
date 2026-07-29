@@ -41,9 +41,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .field input:disabled{opacity:.7;background:#fff}
 .field .hint{font-size:10.5px;color:var(--ink3)}
 .field.err input,.field.err select{border-color:var(--danger)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
 .seg{display:flex;gap:8px;flex-wrap:wrap}
-.seg .opt{flex:1;min-width:88px;padding:11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:13px;text-align:center;transition:.15s}
+.seg .opt{flex:1;min-width:88px;min-height:48px;padding:9px 11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:13px;line-height:1.2;text-align:center;transition:.15s;display:flex;align-items:center;justify-content:center}
 .seg .opt.sel{background:var(--rose);color:#fff;border-color:transparent}
 .checks{display:flex;flex-wrap:wrap;gap:8px}
 .checks .ck{padding:10px 14px;border-radius:20px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:600;font-size:12.5px;transition:.15s}
@@ -169,7 +169,7 @@ document.getElementById('f_sangue').innerHTML='<option value="">—</option>'+OP
 document.getElementById('chk_comorb').innerHTML=OPT_COMORB.map(o=>`<button type="button" class="ck" data-v="${esc(o)}">${esc(o)}</button>`).join('');
 
 function upcase(el){ el.addEventListener('input',()=>{ const s=el.selectionStart; el.value=el.value.toUpperCase(); try{el.setSelectionRange(s,s);}catch(e){} }); }
-['f_nome','f_acompnome','f_bebe','f_medico','f_matern'].forEach(id=>upcase(document.getElementById(id)));
+['f_nome','f_rg','f_compl','f_acompnome','f_bebe','f_medico','f_matern','f_outrascomorb','f_alergias','f_medic'].forEach(id=>upcase(document.getElementById(id)));
 function seg(id){ const el=document.getElementById(id); el.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{ el.querySelectorAll('.opt').forEach(x=>x.classList.remove('sel')); o.classList.add('sel'); }); }
 ['seg_acomp','seg_sexo','seg_gest','seg_nascant','seg_pacote'].forEach(seg);
 function segVal(id){ const s=document.querySelector('#'+id+' .opt.sel'); return s?s.dataset.v:''; }
@@ -189,7 +189,7 @@ async function buscaCep(){
   try{
     const r=await fetch('https://viacep.com.br/ws/'+c+'/json/'); const d=await r.json();
     if(d.erro){ msg.className='cep-msg bad'; msg.textContent='CEP não encontrado — confira'; return; }
-    const setF=(id,val)=>{ const el=document.getElementById(id); el.value=val||''; el.disabled=!!val; };
+    const setF=(id,val)=>{ const el=document.getElementById(id); el.value=(val||'').toUpperCase(); el.disabled=!!val; };
     setF('f_cidade',d.localidade); setF('f_uf',d.uf); setF('f_bairro',d.bairro); setF('f_logr',d.logradouro);
     const faltaRua=!d.logradouro;
     msg.className='cep-msg ok'; msg.textContent=d.localidade+'/'+d.uf+(faltaRua?' — preencha rua, bairro e número':' — agora o número');

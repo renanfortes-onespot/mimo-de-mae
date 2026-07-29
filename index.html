@@ -300,9 +300,9 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
 .field textarea{min-height:60px;resize:vertical}
 .field .hint{font-size:10.5px;color:var(--ink3)}
 .field.err input,.field.err select{border-color:var(--danger)}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
 .seg{display:flex;gap:8px;flex-wrap:wrap}
-.seg .opt{flex:1;min-width:80px;padding:10px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:12.5px;text-align:center;transition:.15s}
+.seg .opt{flex:1;min-width:80px;min-height:46px;padding:9px 10px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:12.5px;line-height:1.2;text-align:center;transition:.15s;display:flex;align-items:center;justify-content:center}
 .seg .opt.sel{background:var(--btn);color:#fff;border-color:transparent}
 .checks{display:flex;flex-wrap:wrap;gap:8px}
 .checks .ck{padding:9px 13px;border-radius:20px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:600;font-size:12.5px;transition:.15s}
@@ -1108,7 +1108,7 @@ function maskFone(el){ el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0
 function maskCEP(el){ el.oninput=()=>{ let d=el.value.replace(/\D/g,'').slice(0,8); el.value=d.replace(/(\d{5})(\d)/,'$1-$2'); }; }
 function wireCadastro(){
   document.getElementById('cadBack').onclick=()=>showView('pacientes');
-  ['f_nome','f_acompnome','f_bebe','f_medico','f_matern'].forEach(id=>upcase(document.getElementById(id)));
+  ['f_nome','f_rg','f_compl','f_acompnome','f_bebe','f_medico','f_matern','f_outrascomorb','f_alergias','f_medic'].forEach(id=>upcase(document.getElementById(id)));
   maskCPF(document.getElementById('f_cpf')); maskFone(document.getElementById('f_wpp')); maskFone(document.getElementById('f_acompwpp')); maskCEP(document.getElementById('f_cep'));
   ['seg_acomp','seg_sexo','seg_gest','seg_nascant','seg_pacote'].forEach(seg);
   document.querySelectorAll('#chk_comorb .ck').forEach(b=>b.onclick=()=>b.classList.toggle('sel'));
@@ -1125,7 +1125,7 @@ async function buscaCep(){
     const r=await fetch('https://viacep.com.br/ws/'+cep+'/json/'); const d=await r.json();
     if(d.erro){ msg.className='cep-msg bad'; msg.textContent='CEP não encontrado — confira'; return; }
     // cidade/UF sempre travadas (do CEP). Rua/bairro: trava se o CEP trouxer; libera p/ digitar se vier vazio.
-    const setF=(id,val)=>{ const el=document.getElementById(id); el.value=val||''; el.disabled=!!val; };
+    const setF=(id,val)=>{ const el=document.getElementById(id); el.value=(val||'').toUpperCase(); el.disabled=!!val; };
     setF('f_cidade',d.localidade); setF('f_uf',d.uf); setF('f_bairro',d.bairro); setF('f_logr',d.logradouro);
     const faltaRua=!d.logradouro;
     msg.className='cep-msg ok';
