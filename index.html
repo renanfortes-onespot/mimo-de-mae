@@ -266,6 +266,22 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .login-btn:disabled{opacity:.6}
 .login-err{background:#FDECEA;color:#C0453B;padding:10px 12px;border-radius:11px;font-size:12.5px;font-weight:600;margin-bottom:14px;text-align:center}
 html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
+.login-err.okmsg{background:rgba(63,176,122,.15);color:var(--mint-ink)}
+.login-alt{text-align:center;font-size:12.5px;color:var(--ink2);margin-top:16px}
+.login-alt a{color:var(--rose);font-weight:700;text-decoration:none}
+
+/* Acessos */
+.acc-list{display:flex;flex-direction:column;gap:10px}
+.acc-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
+.acc-card .info{flex:1;min-width:0}
+.acc-card .nm{font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-card .em{font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-tags{display:flex;gap:6px;margin-top:5px}
+.acc-actions{display:flex;gap:8px;flex:none}
+.acc-btn{padding:9px 13px;border-radius:11px;font-weight:700;font-size:12px;border:1px solid var(--line);white-space:nowrap}
+.acc-btn.on{background:var(--mint);border-color:var(--mint-deep);color:var(--mint-ink)}
+.acc-btn.off{background:transparent;color:var(--danger);border-color:var(--danger)}
+.acc-btn.admin{background:var(--btn-soft);color:var(--btn-soft-ink);border-color:transparent}
 
 /* ---------- Formulário de cadastro ---------- */
 .form-head{background:var(--grad);color:#fff;padding:calc(env(safe-area-inset-top) + 14px) 18px 20px;border-radius:0 0 26px 26px}
@@ -344,7 +360,34 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
       <label>Senha</label>
       <input type="password" id="loginPass" autocomplete="current-password" required>
       <button type="submit" class="login-btn" id="loginBtn">Entrar</button>
+      <div class="login-alt">Não tem acesso? <a href="#" id="toSignup">Solicitar</a></div>
     </form>
+    <form class="login-card" id="signupForm" style="display:none">
+      <div class="login-logo"><img src="./logo.png" alt="Mimo de Mãe"></div>
+      <h1>Solicitar acesso</h1>
+      <div class="sub">Entrada no painel</div>
+      <div class="login-err" id="signupMsg" style="display:none"></div>
+      <label>Nome</label>
+      <input type="text" id="suNome" required>
+      <label>E-mail</label>
+      <input type="email" id="suEmail" autocomplete="username" required>
+      <label>Senha</label>
+      <input type="password" id="suPass" autocomplete="new-password" minlength="6" required>
+      <button type="submit" class="login-btn" id="signupBtn">Solicitar acesso</button>
+      <div class="login-alt"><a href="#" id="toLogin">Já tenho acesso</a></div>
+    </form>
+  </div>
+</div>
+
+<!-- AGUARDANDO LIBERAÇÃO -->
+<div id="aguardandoView" style="display:none">
+  <div class="login-wrap">
+    <div class="login-card" style="text-align:center">
+      <div class="login-logo"><img src="./logo.png" alt="Mimo de Mãe"></div>
+      <h1>Acesso em análise</h1>
+      <p style="color:var(--ink2);font-size:13.5px;line-height:1.55;margin:12px 0 20px">Sua conta foi criada e está <b>aguardando liberação</b> de um administrador. Assim que for aprovada, é só entrar.</p>
+      <button class="login-btn" id="aguardSair">Sair</button>
+    </div>
   </div>
 </div>
 
@@ -358,6 +401,7 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
       <span>Enf.ª Vanessa Cardinal</span>
     </div>
     <div class="spacer"></div>
+    <button class="icon-btn" id="acessosBtn" title="Acessos" style="display:none"></button>
     <button class="icon-btn" id="themeBtn" title="Tema">🌙</button>
     <button class="logout-btn" id="logoutBtn" title="Sair" style="display:none">Sair</button>
   </div>
@@ -388,6 +432,9 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
 
 <!-- NOVO CADASTRO -->
 <div class="view" id="cadastroView"></div>
+
+<!-- ACESSOS (admin) -->
+<div class="view" id="acessosView"></div>
 <button class="fab" id="fabNovo" title="Novo cadastro"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <!-- PAINEL -->
@@ -694,7 +741,7 @@ function showView(v){
   document.getElementById(v+'View').classList.add('active');
   const tabsVisible = v==='pacientes'||v==='painel';
   document.getElementById('tabsBar').style.display = tabsVisible?'flex':'none';
-  document.querySelector('.hero').style.display = (v==='detail'||v==='cadastro')?'none':'block';
+  document.querySelector('.hero').style.display = (v==='detail'||v==='cadastro'||v==='acessos')?'none':'block';
   const fab=document.getElementById('fabNovo'); if(fab) fab.style.display = (v==='pacientes')?'grid':'none';
   if(v==='pacientes'||v==='painel'){
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===v));
@@ -912,12 +959,69 @@ async function doLogin(email,pass){ const {error}=await sb.auth.signInWithPasswo
 async function checkSession(){ if(!ONLINE) return true; const {data}=await sb.auth.getSession(); return !!(data&&data.session); }
 function showLogin(show){
   document.getElementById('loginView').style.display=show?'block':'none';
+  document.getElementById('aguardandoView').style.display='none';
   document.querySelector('.hero').style.display=show?'none':'block';
   document.getElementById('tabsBar').style.display=show?'none':'flex';
   const fab=document.getElementById('fabNovo'); if(fab) fab.style.display=show?'none':'grid';
   document.getElementById('logoutBtn').style.display=(!show&&ONLINE)?'block':'none';
+  if(show){ document.getElementById('acessosBtn').style.display='none'; document.getElementById('loginForm').style.display=''; document.getElementById('signupForm').style.display='none'; }
 }
-async function bootApp(){ showLogin(false); showView('pacientes'); await loadPacientes(); }
+let IS_ADMIN=false, ME=null;
+async function getMeuPerfil(){
+  const {data:{user}}=await sb.auth.getUser();
+  if(!user) return null;
+  const {data,error}=await sb.from('mimo_usuarios').select('*').eq('id',user.id).maybeSingle();
+  if(error) return {ativo:true, papel:'admin', _legacy:true}; // tabela ainda não existe → não travar
+  return data;
+}
+function showAguardando(){
+  document.getElementById('loginView').style.display='none';
+  document.getElementById('aguardandoView').style.display='block';
+  document.querySelector('.hero').style.display='none';
+  document.getElementById('tabsBar').style.display='none';
+  const fab=document.getElementById('fabNovo'); if(fab) fab.style.display='none';
+}
+async function bootApp(){
+  const prof=await getMeuPerfil();
+  if(!prof || !prof.ativo){ showAguardando(); return; }
+  ME=prof; IS_ADMIN=(prof.papel==='admin');
+  document.getElementById('aguardandoView').style.display='none';
+  showLogin(false);
+  document.getElementById('acessosBtn').style.display = IS_ADMIN?'grid':'none';
+  showView('pacientes'); await loadPacientes();
+}
+async function renderAcessos(){
+  const v=document.getElementById('acessosView');
+  v.innerHTML=`<div class="form-head"><button class="back-btn" id="accBack">‹ Voltar</button><h2>Acessos</h2><p>Libere ou bloqueie quem entra no painel</p></div>
+    <div class="wrap"><div class="acc-list" id="accList">Carregando…</div></div>`;
+  document.getElementById('accBack').onclick=()=>showView('pacientes');
+  showView('acessos'); window.scrollTo(0,0);
+  const {data,error}=await sb.from('mimo_usuarios').select('*').order('ativo',{ascending:true}).order('email');
+  const list=document.getElementById('accList');
+  if(error){ list.innerHTML='<div class="empty-state">Erro: '+esc(error.message)+'</div>'; return; }
+  if(!data||!data.length){ list.innerHTML='<div class="empty-state">Nenhum usuário ainda.</div>'; return; }
+  list.innerHTML=data.map(u=>`
+    <div class="acc-card" data-id="${u.id}">
+      <div class="info">
+        <div class="nm">${esc(u.nome||u.email||'—')}</div>
+        <div class="em">${esc(u.email||'')}</div>
+        <div class="acc-tags">
+          <span class="badge ${u.ativo?'b-nasceu':'b-semdata'}">${u.ativo?'Ativo':'Inativo'}</span>
+          ${u.papel==='admin'?'<span class="badge b-ativa">Admin</span>':''}
+        </div>
+      </div>
+      <div class="acc-actions">
+        <button class="acc-btn ${u.ativo?'off':'on'}" data-tg="${u.id}">${u.ativo?'Bloquear':'Ativar'}</button>
+      </div>
+    </div>`).join('');
+  list.querySelectorAll('[data-tg]').forEach(b=>b.onclick=async()=>{
+    const u=data.find(x=>x.id===b.dataset.tg);
+    b.disabled=true; b.textContent='...';
+    const {error}=await sb.from('mimo_usuarios').update({ativo:!u.ativo}).eq('id',u.id);
+    if(error){ toast('Erro: '+error.message); b.disabled=false; return; }
+    toast(u.ativo?'Acesso bloqueado':'Acesso liberado'); renderAcessos();
+  });
+}
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(window._tt); window._tt=setTimeout(()=>t.classList.remove('show'),2600); }
 
 /* ================= Questionário (novo cadastro) ================= */
@@ -1078,10 +1182,28 @@ document.getElementById('loginForm').onsubmit=async e=>{
   const email=document.getElementById('loginEmail').value.trim(), pass=document.getElementById('loginPass').value;
   const e2=await doLogin(email,pass);
   btn.disabled=false; btn.textContent='Entrar';
-  if(e2){ err.textContent='E-mail ou senha inválidos.'; err.style.display='block'; return; }
+  if(e2){ err.className='login-err'; err.textContent='E-mail ou senha inválidos.'; err.style.display='block'; return; }
   await bootApp();
 };
 document.getElementById('logoutBtn').onclick=async()=>{ if(ONLINE) await sb.auth.signOut(); showLogin(true); };
+document.getElementById('aguardSair').onclick=async()=>{ if(ONLINE) await sb.auth.signOut(); showLogin(true); };
+document.getElementById('acessosBtn').innerHTML=icon('users');
+document.getElementById('acessosBtn').onclick=renderAcessos;
+document.getElementById('toSignup').onclick=e=>{ e.preventDefault(); document.getElementById('loginForm').style.display='none'; document.getElementById('signupForm').style.display=''; };
+document.getElementById('toLogin').onclick=e=>{ e.preventDefault(); document.getElementById('signupForm').style.display='none'; document.getElementById('loginForm').style.display=''; };
+document.getElementById('signupForm').onsubmit=async e=>{
+  e.preventDefault();
+  const btn=document.getElementById('signupBtn'), msg=document.getElementById('signupMsg');
+  msg.style.display='none'; btn.disabled=true; btn.textContent='Enviando…';
+  const nome=document.getElementById('suNome').value.trim(), email=document.getElementById('suEmail').value.trim(), pass=document.getElementById('suPass').value;
+  const {error}=await sb.auth.signUp({email,password:pass,options:{data:{nome}}});
+  btn.disabled=false; btn.textContent='Solicitar acesso';
+  if(error){ msg.className='login-err'; msg.textContent=error.message; msg.style.display='block'; return; }
+  if(ONLINE) await sb.auth.signOut();
+  const lerr=document.getElementById('loginErr');
+  lerr.className='login-err okmsg'; lerr.textContent='Acesso solicitado! Aguarde um admin liberar, depois é só entrar.'; lerr.style.display='block';
+  document.getElementById('signupForm').style.display='none'; document.getElementById('loginForm').style.display='';
+};
 
 (async()=>{
   if(ONLINE){
