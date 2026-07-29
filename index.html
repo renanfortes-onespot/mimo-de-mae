@@ -227,6 +227,9 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .chart-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
 .chart-card h4{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--ink2);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:9px}
+.mtoggle{margin-left:auto;display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;text-transform:none;letter-spacing:0}
+.mt-opt{padding:5px 10px;border-radius:8px;font-size:10.5px;font-weight:700;color:var(--ink2);white-space:nowrap;transition:.15s}
+.mt-opt.sel{background:var(--btn);color:#fff}
 .chart-box{position:relative;height:230px}
 .chart-box.dn{height:310px}
 .chart-card.wide{grid-column:1/-1}
@@ -443,7 +446,7 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
   <div class="wrap">
     <div class="kpis" id="kpis"></div>
     <div class="charts" id="charts">
-      <div class="chart-card wide"><h4><span class="sec-ic" data-ic="calendar"></span>Partos previstos por mês (DPP)</h4><div class="chart-box"><canvas id="chMes"></canvas></div></div>
+      <div class="chart-card wide"><h4><span class="sec-ic" data-ic="calendar"></span>Partos previstos por mês (DPP)<div class="mtoggle" id="mesToggle"><button class="mt-opt sel" data-m="futuro">A partir de hoje</button><button class="mt-opt" data-m="tudo">Histórico</button></div></h4><div class="chart-box"><canvas id="chMes"></canvas></div></div>
       <div class="chart-card"><h4><span class="sec-ic" data-ic="briefcase"></span>Pacientes por pacote</h4><div class="chart-box dn"><canvas id="chPacote"></canvas></div></div>
       <div class="chart-card"><h4><span class="sec-ic" data-ic="baby"></span>Gestantes ativas por trimestre</h4><div class="gauges" id="gaugeTri"></div></div>
       <div class="chart-card"><h4><span class="sec-ic" data-ic="pulse"></span>Tipo de parto (nascidos)</h4><div class="gauges" id="gaugeVia"></div></div>
@@ -753,7 +756,7 @@ function showView(v){
 }
 
 /* ---------- dashboard ---------- */
-let charts={}, dlRegistered=false, DL_INK='#2C2530', DL_LINE='#B0A4AC';
+let charts={}, dlRegistered=false, DL_INK='#2C2530', DL_LINE='#B0A4AC', mesModo='futuro';
 // Plugin: rótulos de rosca — % dentro das fatias grandes, e fora (com linha-guia) nas finas. Todos aparecem.
 const outsideLabels = {
   id:'outsideLabels',
@@ -823,8 +826,13 @@ function renderDash(){
   const keys=Object.keys(monthMap).sort();
   let labels=[],data=[];
   if(keys.length){
-    const [y0,m0]=keys[0].split('-').map(Number); const [y1,m1]=keys[keys.length-1].split('-').map(Number);
-    let y=y0,m=m0; while(y<y1||(y===y1&&m<=m1)){ const k=y+'-'+String(m).padStart(2,'0'); labels.push(MESES[m-1]+'/'+String(y).slice(2)); data.push(monthMap[k]||0); m++; if(m>12){m=1;y++;} }
+    let [y0,m0]=keys[0].split('-').map(Number); let [ey,em]=keys[keys.length-1].split('-').map(Number);
+    if(mesModo==='futuro'){
+      const ty=TODAY.getFullYear(), tm=TODAY.getMonth()+1;              // começa no mês atual
+      if(ty>y0||(ty===y0&&tm>m0)){ y0=ty; m0=tm; }
+      if(y0>ey||(y0===ey&&m0>em)){ ey=y0; em=m0; }                     // garante pelo menos o mês atual
+    }
+    let y=y0,m=m0; while(y<ey||(y===ey&&m<=em)){ const k=y+'-'+String(m).padStart(2,'0'); labels.push(MESES[m-1]+'/'+String(y).slice(2)); data.push(monthMap[k]||0); m++; if(m>12){m=1;y++;} }
   }
   charts.mes=new Chart(document.getElementById('chMes'),{type:'bar',
     data:{labels,datasets:[{data,backgroundColor:ROSE,borderRadius:7,maxBarThickness:40}]},
@@ -1172,6 +1180,7 @@ document.getElementById('tabsBar').onclick=e=>{ const t=e.target.closest('.tab')
 document.getElementById('filterChips').onclick=e=>{ const c=e.target.closest('.chip'); if(c){filter=c.dataset.f;renderChips();renderList();} };
 document.getElementById('plist').onclick=e=>{ const c=e.target.closest('.pcard'); if(c)openDetail(c.dataset.id); };
 document.getElementById('searchInput').oninput=e=>{ term=e.target.value.trim(); renderList(); };
+document.getElementById('mesToggle').onclick=e=>{ const b=e.target.closest('.mt-opt'); if(!b)return; mesModo=b.dataset.m; document.querySelectorAll('#mesToggle .mt-opt').forEach(x=>x.classList.toggle('sel',x===b)); renderDash(); };
 
 /* ---------- init ---------- */
 document.querySelectorAll('.sec-ic[data-ic]').forEach(s=>s.innerHTML=icon(s.dataset.ic));
