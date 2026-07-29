@@ -312,17 +312,20 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
   .chart-card.wide{grid-column:auto}
 }
 
-/* ---------- Desktop: mantém a cara de app, mas em coluna centralizada ---------- */
-@media(min-width:820px){
-  .hero-top, .hero-hi{max-width:760px;margin-left:auto;margin-right:auto}
-  .tabs{max-width:760px;margin-left:auto;margin-right:auto}
-  #pacientesView .wrap{max-width:760px}
-  #detailView{max-width:720px;margin:0 auto;padding-top:22px}
-  #detailView .detail-head{border-radius:26px}
-  #cadastroView{max-width:720px;margin:0 auto;padding-top:22px}
-  #cadastroView .form-head{border-radius:26px}
-  #painelView .wrap{max-width:1060px}
-  .fab{right:max(22px, calc(50% - 372px))}
+/* ---------- Desktop: preenche a tela (multi-coluna), mantém cara de app no mobile ---------- */
+@media(min-width:900px){
+  .wrap{max-width:1360px}
+  .plist{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+  .sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start;padding:0 6px}
+  .sec-grid .section{margin:14px 10px}
+  #cadForm{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;align-items:start;padding:0 6px}
+  #cadForm .fsection{margin:14px 6px}
+  #cadForm .form-submit{grid-column:1 / -1}
+}
+@media(min-width:1360px){
+  .plist{grid-template-columns:repeat(3,1fr)}
+  .sec-grid{grid-template-columns:repeat(3,1fr)}
+  #cadForm{grid-template-columns:repeat(3,1fr)}
 }
 </style>
 </head>
@@ -625,6 +628,7 @@ function openDetail(id){
          </div>`
       : `<button class="born-btn" id="bornBtn">${icon('baby')} Registrar que o bebê nasceu</button>` }</div>
 
+    <div class="sec-grid">
     <div class="section"><h3><span class="sec-ic">${icon('baby')}</span>Gestação & Bebê</h3><div class="kv">
       ${rowKV('Nº de gestações', p.gestacoes?nameCase(p.gestacoes):null)}
       ${rowKV('Nascimentos anteriores', p.nascAnterior?nameCase(p.nascAnterior):null)}
@@ -667,6 +671,7 @@ function openDetail(id){
       ${rowKV('Pacote escolhido', p.pacote?nameCase(p.pacote):null)}
       ${rowKV('Cadastro', fmtBR(p.carimbo))}
     </div></div>
+    </div>
 
     <div class="section"><button class="del-btn" id="delBtn">${icon('trash')} Excluir paciente</button></div>
     <div style="height:30px"></div>
