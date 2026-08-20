@@ -244,6 +244,19 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .gauge .glabel{font-size:12.5px;font-weight:700;color:var(--ink)}
 .gauge .gsub{font-size:11px;color:var(--ink2);font-weight:600;margin-top:-5px}
 
+/* tabela de distribuição (Qtde + %) */
+.dtable{width:100%;border-collapse:collapse;font-size:12.5px}
+.dtable th{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);font-weight:700;text-align:left;padding:0 4px 9px}
+.dtable th.rt{text-align:right}
+.dtable td{padding:9px 4px;border-top:1px solid var(--line2);vertical-align:middle}
+.dtable .dt-cat{color:var(--ink);font-weight:600}
+.dtable .dt-n{text-align:right;font-weight:700;white-space:nowrap;width:44px}
+.dtable .dt-p{text-align:right;white-space:nowrap;width:120px}
+.dtable .dt-p b{display:inline-block;min-width:34px;text-align:right;font-weight:700}
+.dt-bar{display:inline-block;width:52px;height:6px;border-radius:4px;background:var(--surface2);margin-right:9px;vertical-align:middle;overflow:hidden;position:relative}
+.dt-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--rose);border-radius:4px}
+.dtable tfoot td{border-top:2px solid var(--line);font-weight:800;color:var(--ink2)}
+
 .empty-state{text-align:center;padding:60px 20px;color:var(--ink3)}
 .empty-state .em{font-size:40px;margin-bottom:12px}
 
@@ -447,10 +460,10 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
     <div class="kpis" id="kpis"></div>
     <div class="charts" id="charts">
       <div class="chart-card wide"><h4><span class="sec-ic" data-ic="calendar"></span>Partos previstos por mês (DPP)<div class="mtoggle" id="mesToggle"><button class="mt-opt sel" data-m="futuro">A partir de hoje</button><button class="mt-opt" data-m="tudo">Histórico</button></div></h4><div class="chart-box"><canvas id="chMes"></canvas></div></div>
-      <div class="chart-card"><h4><span class="sec-ic" data-ic="briefcase"></span>Pacientes por pacote</h4><div class="chart-box dn"><canvas id="chPacote"></canvas></div></div>
+      <div class="chart-card"><h4><span class="sec-ic" data-ic="briefcase"></span>Pacientes por pacote</h4><div class="dtable-wrap" id="tblPacote"></div></div>
       <div class="chart-card"><h4><span class="sec-ic" data-ic="baby"></span>Gestantes ativas por trimestre</h4><div class="gauges" id="gaugeTri"></div></div>
       <div class="chart-card"><h4><span class="sec-ic" data-ic="pulse"></span>Tipo de parto (nascidos)</h4><div class="gauges" id="gaugeVia"></div></div>
-      <div class="chart-card"><h4><span class="sec-ic" data-ic="droplet"></span>Tipo sanguíneo</h4><div class="chart-box dn"><canvas id="chSangue"></canvas></div></div>
+      <div class="chart-card"><h4><span class="sec-ic" data-ic="droplet"></span>Tipo sanguíneo</h4><div class="dtable-wrap" id="tblSangue"></div></div>
       <div class="chart-card"><h4><span class="sec-ic" data-ic="pulse"></span>Comorbidades relatadas</h4><div class="chart-box"><canvas id="chComorb"></canvas></div></div>
     </div>
   </div>
@@ -843,8 +856,8 @@ function renderDash(){
     options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:22}},
       plugins:{legend:{display:false},datalabels:barLabels},scales:noAxis}});
 
-  donut('chPacote', groupBy(p=>p.pacote?nameCase(p.pacote):'Não informado'));
-  donut('chSangue', groupBy(p=>p.tipoSanguineo?bloodClean(p.tipoSanguineo):'—'));
+  renderTable('tblPacote', groupBy(p=>p.pacote?nameCase(p.pacote):'Não informado'), 'Pacote');
+  renderTable('tblSangue', groupBy(p=>p.tipoSanguineo?bloodClean(p.tipoSanguineo):'—'), 'Tipo');
 
   // Trimestre → gauges (só gestantes ativas)
   const ativas=P.filter(p=>['ativa','prox'].includes(status(p).key));
@@ -876,6 +889,23 @@ function renderDash(){
       scales:{x:{display:false},y:{grid:{display:false},ticks:{font:{size:11.5,weight:'600'}}}}}});
 }
 function groupBy(fn){ const m={}; P.forEach(p=>{const k=fn(p);m[k]=(m[k]||0)+1;}); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+function renderTable(hostId, entries, colLabel){
+  const host=document.getElementById(hostId); if(!host) return;
+  const total=entries.reduce((a,e)=>a+e[1],0)||1;
+  const rows=entries.map(([label,n])=>{
+    const p=n/total*100;
+    return `<tr>
+      <td class="dt-cat">${esc(label)}</td>
+      <td class="dt-n">${n}</td>
+      <td class="dt-p"><span class="dt-bar"><i style="width:${p.toFixed(0)}%"></i></span><b>${Math.round(p)}%</b></td>
+    </tr>`;
+  }).join('');
+  host.innerHTML=`<table class="dtable">
+    <thead><tr><th>${esc(colLabel||'Item')}</th><th class="rt">Qtde</th><th class="rt">% do total</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr><td>Total</td><td class="dt-n">${total}</td><td class="dt-p"><b>100%</b></td></tr></tfoot>
+  </table>`;
+}
 function buildGauges(id,items){
   document.getElementById(id).innerHTML=items.map(it=>{
     const p=it.total?Math.round(it.value/it.total*100):0;

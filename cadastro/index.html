@@ -53,6 +53,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .field .hint{font-size:10.5px;color:var(--ink3)}
 .field.err input,.field.err select{border-color:var(--danger)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}
+@media(max-width:460px){ .grid2{grid-template-columns:1fr} }
 .seg{display:flex;gap:8px;flex-wrap:wrap}
 .seg .opt{flex:1;min-width:88px;min-height:48px;padding:9px 11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:13px;line-height:1.2;text-align:center;transition:.15s;display:flex;align-items:center;justify-content:center}
 .seg .opt.sel{background:var(--rose);color:#fff;border-color:transparent}
