@@ -1,0 +1,18 @@
+name: keep-supabase-alive
+on:
+  schedule:
+    - cron: '17 9 */2 * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (mantem o projeto acordado)
+        run: |
+          echo "Pingando o Supabase para evitar a pausa por inatividade..."
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "apikey: sb_publishable_oNu_rbujM-PNfsfO8Cod5Q_EREIbAbA" \
+            "https://orcctjbosfdtxdfdhnbx.supabase.co/rest/v1/mimo_pacientes?select=id&limit=1")
+          echo "Resposta HTTP: $code"
+          if [ "$code" = "000" ]; then echo "Falha de conexao"; exit 1; fi
+          echo "OK - banco recebeu a requisicao (segue acordado)."
