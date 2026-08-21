@@ -1228,7 +1228,7 @@ document.getElementById('loginForm').onsubmit=async e=>{
   const email=document.getElementById('loginEmail').value.trim(), pass=document.getElementById('loginPass').value;
   const e2=await doLogin(email,pass);
   btn.disabled=false; btn.textContent='Entrar';
-  if(e2){ err.className='login-err'; err.textContent='E-mail ou senha inválidos.'; err.style.display='block'; return; }
+  if(e2){ err.className='login-err'; err.textContent=/failed to fetch|load failed|network/i.test(e2.message||'')?'Sem conexão com o servidor. Tente de novo em 1 minuto.':'E-mail ou senha inválidos.'; err.style.display='block'; return; }
   await bootApp();
 };
 document.getElementById('logoutBtn').onclick=async()=>{ if(ONLINE) await sb.auth.signOut(); showLogin(true); };

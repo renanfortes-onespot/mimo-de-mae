@@ -235,7 +235,7 @@ document.getElementById('f').onsubmit=async e=>{
   };
   Object.keys(row).forEach(k=>{ if(row[k]==='') row[k]=null; });
   const {error}=await sb.from('mimo_pacientes').insert(row);
-  if(error){ errTop.textContent='Ops, não consegui enviar: '+error.message+'. Tente novamente.'; errTop.style.display='block'; btn.disabled=false; btn.textContent='Enviar ficha'; window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(error){ const net=/failed to fetch|load failed|network/i.test(error.message||''); errTop.textContent=net?'Sem conexão com o servidor no momento. Tente novamente em alguns minutos. 💛':('Não consegui enviar: '+error.message+'. Tente novamente.'); errTop.style.display='block'; btn.disabled=false; btn.textContent='Enviar ficha'; window.scrollTo({top:0,behavior:'smooth'}); return; }
   document.getElementById('formView').hidden=true;
   document.getElementById('doneView').hidden=false;
   window.scrollTo(0,0);
