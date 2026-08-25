@@ -363,6 +363,16 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
 .fsection > h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--ink2);font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:9px}
 .fcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px;display:flex;flex-direction:column;gap:14px}
 .field{display:flex;flex-direction:column;gap:6px}
+.field[hidden]{display:none}
+.withbtn{display:flex;gap:8px;align-items:stretch}
+.withbtn input{flex:1;min-width:0}
+.natem{flex:none;padding:0 13px;border-radius:11px;border:1px dashed var(--line);background:var(--surface2);color:var(--ink3);font-family:inherit;font-weight:700;font-size:11.5px;white-space:nowrap;transition:.15s}
+.natem.sel{background:var(--mint);border-color:var(--mint-deep);border-style:solid;color:var(--mint-ink)}
+.calc{padding:11px 12px;border-radius:11px;border:1px dashed var(--line);background:var(--surface2);color:var(--ink);font-size:14px;font-weight:800}
+.calc.vazio{color:var(--ink3);font-weight:500}
+.ig2{display:flex;gap:8px}
+.field.err .seg,.field.err .checks{outline:1px solid var(--danger);outline-offset:4px;border-radius:11px}
+.robson-d{font-size:11px;color:var(--ink3);line-height:1.45;margin-top:2px}
 .field label{font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.4px}
 .field label .req{color:var(--danger);margin-left:2px}
 .field input,.field select,.field textarea{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:14px}
@@ -622,6 +632,17 @@ function updBorn(id,field,val){
   if(OVER[id]){ OVER[id][field]=val; saveOver(); }
 }
 
+/* campos que moram no JSON "legado" (sem precisar de coluna nova no banco) */
+function updExtra(id,key,val){
+  const p=P.find(x=>String(x.id)===String(id)); if(!p) return;
+  const leg=Object.assign({}, p.legado||{}, {[key]:val});
+  p.legado=leg;
+  if(key==='risco') p.risco=val;
+  if(key==='robson') p.robson=val;
+  if(key==='via_pacote') p.viaPacote=val;
+  if(ONLINE) sb.from('mimo_pacientes').update({legado:leg}).eq('id',id).then(chkErr);
+}
+
 function status(p){
   if(bornInfo(p)) return {key:'fim',label:'Nasceu',cls:'b-nasceu',born:true};
   const d=dppEff(p); if(!d) return {key:'semdata',label:'Sem data',cls:'b-semdata'};
@@ -657,6 +678,9 @@ const FIL_DEFS=[
   {k:'__tri',       lbl:'Trimestre'},
   {k:'cidade',      lbl:'Cidade'},
   {k:'pacote',      lbl:'Pacote'},
+  {k:'risco',       lbl:'Risco gestacional'},
+  {k:'viaPacote',   lbl:'Parto previsto'},
+  {k:'robson',      lbl:'Grupo de Robson'},
   {k:'medico',      lbl:'Médico(a)'},
   {k:'maternidade', lbl:'Maternidade'},
   {k:'sangue',      lbl:'Tipo sanguíneo'},
@@ -738,6 +762,8 @@ const COLS=[
   {k:'dpp',         lbl:'DPP',              t:'date', v:p=>dppEff(p), d:v=>fmtBR(v)||''},
   {k:'faltam',      lbl:'Faltam (dias)',    t:'num',  v:p=>{const d=dppEff(p); return d?diffDays(parseISO(d),TODAY):null;}, num:1},
   {k:'trimestre',   lbl:'Trimestre',        t:'num',  v:p=>trimestre(p), d:v=>v==null?'':v+'º', num:1},
+  {k:'risco',       lbl:'Risco gestacional',t:'text', v:p=>p.risco||'',
+     cell:p=>p.risco?'<span class="badge '+RISCO_CLS[p.risco]+'">'+esc(p.risco)+'</span>':''},
   {k:'cidade',      lbl:'Cidade',           t:'text', v:p=>((p.cidade||cidade(p.endereco))||'').toUpperCase()},
   {k:'whatsapp',    lbl:'WhatsApp',         t:'text', v:p=>p.whatsapp||''},
   {k:'email',       lbl:'E-mail',           t:'text', v:p=>p.email||''},
@@ -763,6 +789,11 @@ const COLS=[
   {k:'acompNome',   lbl:'Acompanhante',     t:'text', v:p=>p.acompNome||''},
   {k:'acompWpp',    lbl:'WhatsApp acomp.',  t:'text', v:p=>p.acompWpp||''},
   {k:'pacote',      lbl:'Pacote',           t:'text', v:p=>p.pacote?nameCase(p.pacote).replace(/^Pacote\s+/i,''):''},
+  {k:'viaPacote',   lbl:'Parto previsto',   t:'text', v:p=>p.viaPacote||''},
+  {k:'robson',       lbl:'Grupo de Robson',  t:'text', v:p=>p.robson||''},
+  {k:'usData',      lbl:'Data do ultrassom',t:'date', v:p=>p.usData, d:v=>fmtBR(v)||''},
+  {k:'usIg',        lbl:'IG no ultrassom',   t:'num',  v:p=>(p.usIgSem==null?null:p.usIgSem*7+(p.usIgDia||0)),
+     d:(v,p)=>p.usIgSem==null?'':(p.usIgSem+'s'+(p.usIgDia||0)+'d'), num:1},
   {k:'pagamento',   lbl:'Pagamento',        t:'text', v:p=>p.pagamento||''},
   {k:'parto',       lbl:'Nasceu em',        t:'date', v:p=>{const b=bornInfo(p); return (b&&b.data)?b.data:null;}, d:v=>fmtBR(v)||''},
   {k:'via',         lbl:'Via de parto',     t:'text', v:p=>{const b=bornInfo(p); return (b&&b.via)?b.via:'';}},
@@ -1022,11 +1053,16 @@ function openDetail(id){
       ${rowKV('Nome do bebê', p.bebe)}
       ${rowKV('Sexo', p.sexo)}
       ${dateRow('DUM (última menstruação)', p.dum, p.dum?null:p.dumRaw)}
-      ${dateRow('DPP pela ultrassonografia', p.dppUltra, p.dppUltra?null:p.dppUltraRaw)}
       ${dateRow('DPP pela DUM', p.dppDum, p.dppDum?null:p.dppDumRaw)}
+      ${rowKV('Data do ultrassom', fmtBR(p.usData))}
+      ${rowKV('IG no ultrassom', p.usIgSem==null?null:(p.usIgSem+'s'+(p.usIgDia||0)+'d'))}
+      ${dateRow('DPP pela ultrassonografia', p.dppUltra, p.dppUltra?null:p.dppUltraRaw)}
     </div></div>
 
     <div class="section"><h3><span class="sec-ic">${icon('heart')}</span>Saúde</h3><div class="kv">
+      <div class="row"><div class="k">Risco gestacional</div><div class="v">
+        <div class="via-toggle" id="riscoTog">${OPT_RISCO.map(r=>'<button class="via-opt '+(p.risco===r?'sel':'')+'" data-risco="'+r+'">'+r+'</button>').join('')}</div>
+      </div></div>
       <div class="row"><div class="k">Tipo sanguíneo</div><div class="v ${p.tipoSanguineo?'':'empty'}">${p.tipoSanguineo?bloodClean(p.tipoSanguineo):'—'}</div></div>
       <div class="row"><div class="k">Comorbidades</div><div class="v">${comorb||'<span style="color:var(--ok);font-weight:700">Nenhuma</span>'}</div></div>
       ${rowKV('Outras comorbidades', p.outrasComorb)}
@@ -1056,6 +1092,8 @@ function openDetail(id){
 
     <div class="section"><h3><span class="sec-ic">${icon('briefcase')}</span>Comercial</h3><div class="kv">
       ${rowKV('Pacote escolhido', p.pacote?nameCase(p.pacote):null)}
+      ${rowKV('Parto previsto', p.viaPacote)}
+      ${p.robson?rowKV('Grupo de Robson', p.robson+' — '+(ROBSON.find(r=>r[0]===p.robson)||['',''])[1]):''}
       ${rowKV('Cadastro', fmtBR(p.carimbo))}
     </div></div>
     </div>
@@ -1070,6 +1108,10 @@ function openDetail(id){
   const bd=document.getElementById('bornDate'); if(bd) bd.onchange=e=>{ if(e.target.value){ updBorn(p.id,'data',e.target.value); renderList(); } };
   document.querySelectorAll('#detailView .via-opt').forEach(el=>el.onclick=()=>{ updBorn(p.id,'via',el.dataset.via); renderList(); reopen(); });
   const bi=document.getElementById('bornInd'); if(bi) bi.oninput=e=>updBorn(p.id,'indicacao',e.target.value);
+  document.querySelectorAll('#riscoTog .via-opt').forEach(el=>el.onclick=()=>{
+    const novo = p.risco===el.dataset.risco ? null : el.dataset.risco;   // clicar de novo limpa
+    updExtra(p.id,'risco',novo); renderFiltros(); renderList(); reopen();
+  });
   const del=document.getElementById('delBtn'); if(del) del.onclick=()=>{ if(confirm('Excluir '+nameCase(p.nome)+' definitivamente?\n\nEsta ação não pode ser desfeita.')) deletePaciente(p.id); };
   showView('detail');
   window.scrollTo(0,0);
@@ -1279,7 +1321,10 @@ function mapFromDB(r){
     nascAnterior:r.nasc_anterior, medico:r.medico, maternidade:r.maternidade,
     tipoSanguineo:r.tipo_sanguineo, comorbidades:r.comorbidades||[], outrasComorb:r.outras_comorbidades,
     alergias:r.alergias, medicacao:r.medicacao, pacote:r.pacote, pagamento:r.pagamento,
-    nasceu:r.nasceu, data_parto:r.data_parto, via_parto:r.via_parto, indicacao_cesarea:r.indicacao_cesarea
+    nasceu:r.nasceu, data_parto:r.data_parto, via_parto:r.via_parto, indicacao_cesarea:r.indicacao_cesarea,
+    risco:g.risco||null, robson:g.robson||null, viaPacote:g.via_pacote||null,
+    usData:g.us_data||null, usIgSem:(g.us_ig_sem==null?null:g.us_ig_sem), usIgDia:(g.us_ig_dia==null?null:g.us_ig_dia),
+    legado:g
   };
 }
 async function deletePaciente(id){
@@ -1396,6 +1441,30 @@ const OPT_ACOMP=['Esposo(a)','Mãe','Outros'], OPT_NASCANT=['Nenhum','Parto norm
 const OPT_SANGUE=['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const OPT_COMORB=['Pressão alta','Diabetes / Diabetes gestacional','Hipotireoidismo','Anemia','Trombofilia','Infecção urinária de repetição'];
 const OPT_PACOTE=['Pacote Completo','Pacote Essencial'];
+const OPT_VIA=['Parto normal','Cesárea'];
+const OPT_RISCO=['Habitual','Intermediário','Alto'];
+const ROBSON=[
+  ['Grupo 1','Nulípara, feto único, cefálico, ≥37 semanas, trabalho de parto espontâneo'],
+  ['Grupo 2','Nulípara, feto único, cefálico, ≥37 semanas, parto induzido ou cesárea antes do trabalho de parto'],
+  ['Grupo 3','Multípara sem cesárea anterior, feto único, cefálico, ≥37 semanas, trabalho de parto espontâneo'],
+  ['Grupo 4','Multípara sem cesárea anterior, feto único, cefálico, ≥37 semanas, parto induzido ou cesárea antes do trabalho de parto'],
+  ['Grupo 5','Com cesárea anterior, feto único, cefálico, ≥37 semanas'],
+  ['Grupo 6','Nulípara, feto único em apresentação pélvica'],
+  ['Grupo 7','Multípara, feto único em apresentação pélvica (inclui cesárea anterior)'],
+  ['Grupo 8','Gestação múltipla (inclui cesárea anterior)'],
+  ['Grupo 9','Feto único em situação transversa ou oblíqua (inclui cesárea anterior)'],
+  ['Grupo 10','Feto único, cefálico, ≤36 semanas (inclui cesárea anterior)'],
+];
+const COMORB_NENHUMA='Nenhuma';
+const RISCO_CLS={'Habitual':'b-ativa','Intermediário':'b-semdata','Alto':'b-prox'};
+const DIAS_GEST=280;
+const dppPorDUM = dum => { const d=parseISO(dum); return d ? isoOf(addDays(d,DIAS_GEST)) : ''; };
+function dppPorUS(dataUS, sem, dia){
+  const d=parseISO(dataUS); if(!d || sem==='' || sem==null) return '';
+  const s=Number(sem), dd=Number(dia||0);
+  if(!Number.isFinite(s)||!Number.isFinite(dd)||s<0||s>44||dd<0||dd>6) return '';
+  return isoOf(addDays(d, DIAS_GEST-(s*7+dd)));
+}
 function segHtml(id,opts){ return `<div class="seg" id="${id}">${opts.map(o=>`<button type="button" class="opt" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div>`; }
 function renderCadastro(){
   const v=document.getElementById('cadastroView');
@@ -1408,10 +1477,10 @@ function renderCadastro(){
       <div class="fsection"><h3><span class="sec-ic">${icon('users')}</span>Identificação</h3><div class="fcard">
         <div class="field"><label>Nome completo <span class="req">*</span></label><input id="f_nome"><div class="hint">Fica em MAIÚSCULO automaticamente</div></div>
         <div class="grid2">
-          <div class="field"><label>Data de nascimento</label><input type="date" id="f_nasc"></div>
+          <div class="field"><label>Data de nascimento <span class="req">*</span></label><input type="date" id="f_nasc"></div>
           <div class="field"><label>CPF <span class="req">*</span></label><input id="f_cpf" inputmode="numeric" placeholder="000.000.000-00"></div>
         </div>
-        <div class="field"><label>RG</label><input id="f_rg"></div>
+        <div class="field"><label>RG <span class="req">*</span></label><div class="withbtn"><input id="f_rg"><button type="button" class="natem" data-for="f_rg" data-val="">Não tenho</button></div></div>
       </div></div>
       <div class="fsection"><h3><span class="sec-ic">${icon('pin')}</span>Endereço</h3><div class="fcard">
         <div class="field"><label>CEP <span class="req">*</span></label><input id="f_cep" inputmode="numeric" placeholder="00000-000"><div class="cep-msg" id="cepMsg"></div></div>
@@ -1423,42 +1492,51 @@ function renderCadastro(){
         <div class="field"><label>Logradouro</label><input id="f_logr" disabled></div>
         <div class="grid2">
           <div class="field"><label>Número <span class="req">*</span></label><input id="f_num" inputmode="numeric"></div>
-          <div class="field"><label>Complemento</label><input id="f_compl"></div>
+          <div class="field"><label>Complemento <span class="req">*</span></label><div class="withbtn"><input id="f_compl"><button type="button" class="natem" data-for="f_compl" data-val="">Não tem</button></div></div>
         </div>
       </div></div>
       <div class="fsection"><h3><span class="sec-ic">${icon('pin')}</span>Contato</h3><div class="fcard">
         <div class="field"><label>WhatsApp <span class="req">*</span></label><input id="f_wpp" inputmode="numeric" placeholder="(00) 0 0000-0000"></div>
-        <div class="field"><label>E-mail</label><input type="email" id="f_email"></div>
+        <div class="field"><label>E-mail <span class="req">*</span></label><div class="withbtn"><input type="email" id="f_email"><button type="button" class="natem" data-for="f_email" data-val="">Não tem</button></div></div>
       </div></div>
       <div class="fsection"><h3><span class="sec-ic">${icon('users')}</span>Acompanhante no parto</h3><div class="fcard">
-        <div class="field"><label>Tipo</label>${segHtml('seg_acomp',OPT_ACOMP)}</div>
+        <div class="field"><label>Tipo <span class="req">*</span></label>${segHtml('seg_acomp',OPT_ACOMP)}</div>
         <div class="field"><label>Nome do acompanhante <span class="req">*</span></label><input id="f_acompnome"></div>
-        <div class="field"><label>WhatsApp do acompanhante</label><input id="f_acompwpp" inputmode="numeric" placeholder="(00) 0 0000-0000"></div>
+        <div class="field"><label>WhatsApp do acompanhante <span class="req">*</span></label><div class="withbtn"><input id="f_acompwpp" inputmode="numeric" placeholder="(00) 0 0000-0000"><button type="button" class="natem" data-for="f_acompwpp" data-val="">Não tem</button></div></div>
       </div></div>
       <div class="fsection"><h3><span class="sec-ic">${icon('baby')}</span>Bebê & Gestação</h3><div class="fcard">
-        <div class="field"><label>Nome do bebê</label><input id="f_bebe"></div>
-        <div class="field"><label>Sexo</label>${segHtml('seg_sexo',OPT_SEXO)}</div>
-        <div class="field"><label>Número de gestações</label>${segHtml('seg_gest',OPT_GEST)}</div>
+        <div class="field"><label>Nome do bebê <span class="req">*</span></label><div class="withbtn"><input id="f_bebe"><button type="button" class="natem" data-for="f_bebe" data-val="">Não escolhido</button></div></div>
+        <div class="field"><label>Sexo <span class="req">*</span></label>${segHtml('seg_sexo',OPT_SEXO)}</div>
+        <div class="field"><label>Número de gestações <span class="req">*</span></label>${segHtml('seg_gest',OPT_GEST)}</div>
+        <div class="field"><label>Nascimentos anteriores <span class="req">*</span></label>${segHtml('seg_nascant',OPT_NASCANT)}</div>
         <div class="grid2">
-          <div class="field"><label>DUM (últ. menstruação)</label><input type="date" id="f_dum"></div>
-          <div class="field"><label>DPP pela ultrassom</label><input type="date" id="f_dppu"></div>
+          <div class="field"><label>DUM — última menstruação <span class="req">*</span></label><div class="withbtn"><input type="date" id="f_dum"><button type="button" class="natem" data-for="f_dum" data-val="">Não sabe</button></div></div>
+          <div class="field"><label>DPP pela DUM</label><div class="calc vazio" id="c_dppd">—</div><div class="hint">DUM + 280 dias</div></div>
         </div>
-        <div class="field"><label>DPP pela DUM</label><input type="date" id="f_dppd"></div>
-        <div class="field"><label>Nascimentos anteriores</label>${segHtml('seg_nascant',OPT_NASCANT)}</div>
+        <div class="grid2">
+          <div class="field"><label>Data do ultrassom <span class="req">*</span></label><div class="withbtn"><input type="date" id="f_usdata"><button type="button" class="natem" data-for="f_usdata" data-val="">Não fez</button></div></div>
+          <div class="field" id="fld_usig"><label>IG no ultrassom <span class="req">*</span></label><div class="ig2"><input id="f_ussem" inputmode="numeric" placeholder="semanas"><input id="f_usdia" inputmode="numeric" placeholder="dias"></div></div>
+        </div>
+        <div class="field"><label>DPP pela ultrassom</label><div class="calc vazio" id="c_dppu">—</div><div class="hint">Data do ultrassom + (280 − idade gestacional daquele dia)</div></div>
       </div></div>
       <div class="fsection"><h3><span class="sec-ic">${icon('clipboard')}</span>Pré-natal</h3><div class="fcard">
-        <div class="field"><label>Médico(a) do pré-natal</label><input id="f_medico"></div>
-        <div class="field"><label>Maternidade escolhida</label><input id="f_matern"></div>
+        <div class="field"><label>Médico(a) do pré-natal <span class="req">*</span></label><div class="withbtn"><input id="f_medico"><button type="button" class="natem" data-for="f_medico" data-val="">A definir</button></div></div>
+        <div class="field"><label>Maternidade escolhida <span class="req">*</span></label><div class="withbtn"><input id="f_matern"><button type="button" class="natem" data-for="f_matern" data-val="">A definir</button></div></div>
       </div></div>
       <div class="fsection"><h3><span class="sec-ic">${icon('heart')}</span>Saúde</h3><div class="fcard">
-        <div class="field"><label>Tipo sanguíneo</label><select id="f_sangue"><option value="">—</option>${OPT_SANGUE.map(o=>`<option>${o}</option>`).join('')}</select></div>
-        <div class="field"><label>Comorbidades</label><div class="checks" id="chk_comorb">${OPT_COMORB.map(o=>`<button type="button" class="ck" data-v="${esc(o)}">${esc(o)}</button>`).join('')}</div></div>
-        <div class="field"><label>Outras comorbidades</label><input id="f_outrascomorb"></div>
-        <div class="field"><label>Alergias / intolerâncias</label><input id="f_alergias"></div>
-        <div class="field"><label>Medicação em uso</label><input id="f_medic"></div>
+        <div class="field"><label>Risco gestacional <span class="req">*</span></label>${segHtml('seg_risco',OPT_RISCO)}</div>
+        <div class="field"><label>Tipo sanguíneo <span class="req">*</span></label><select id="f_sangue"><option value="">—</option>${OPT_SANGUE.map(o=>`<option>${o}</option>`).join('')}</select></div>
+        <div class="field"><label>Comorbidades <span class="req">*</span></label><div class="checks" id="chk_comorb">${OPT_COMORB.map(o=>`<button type="button" class="ck" data-v="${esc(o)}">${esc(o)}</button>`).join('')}<button type="button" class="ck" data-none="1" data-v="${COMORB_NENHUMA}">${COMORB_NENHUMA}</button></div></div>
+        <div class="field"><label>Outras comorbidades <span class="req">*</span></label><div class="withbtn"><input id="f_outrascomorb"><button type="button" class="natem" data-for="f_outrascomorb" data-val="">Não tem</button></div></div>
+        <div class="field"><label>Alergias / intolerâncias <span class="req">*</span></label><div class="withbtn"><input id="f_alergias"><button type="button" class="natem" data-for="f_alergias" data-val="">Não tem</button></div></div>
+        <div class="field"><label>Medicação em uso <span class="req">*</span></label><div class="withbtn"><input id="f_medic"><button type="button" class="natem" data-for="f_medic" data-val="">Não toma</button></div></div>
       </div></div>
       <div class="fsection"><h3><span class="sec-ic">${icon('briefcase')}</span>Comercial</h3><div class="fcard">
-        <div class="field"><label>Pacote</label>${segHtml('seg_pacote',OPT_PACOTE)}</div>
+        <div class="field"><label>Pacote <span class="req">*</span></label>${segHtml('seg_pacote',OPT_PACOTE)}</div>
+        <div class="field"><label>Parto previsto <span class="req">*</span></label>${segHtml('seg_via',OPT_VIA)}<div class="hint">Os dois pacotes atendem parto normal e cesárea</div></div>
+        <div class="field" id="fld_robson" hidden><label>Grupo de Robson <span class="req">*</span></label>
+          <select id="f_robson"><option value="">Selecione o grupo</option>${ROBSON.map(([v,d])=>`<option value="${esc(v)}">${esc(v)} — ${esc(d)}</option>`).join('')}</select>
+          <div class="robson-d" id="robsonD"></div></div>
       </div></div>
       <div class="form-submit"><button type="submit" id="cadSubmit">Salvar cadastro</button></div>
     </form>`;
@@ -1476,8 +1554,44 @@ function wireCadastro(){
   document.getElementById('cadBack').onclick=()=>showView('pacientes');
   ['f_nome','f_rg','f_compl','f_acompnome','f_bebe','f_medico','f_matern','f_outrascomorb','f_alergias','f_medic'].forEach(id=>upcase(document.getElementById(id)));
   maskCPF(document.getElementById('f_cpf')); maskFone(document.getElementById('f_wpp')); maskFone(document.getElementById('f_acompwpp')); maskCEP(document.getElementById('f_cep'));
-  ['seg_acomp','seg_sexo','seg_gest','seg_nascant','seg_pacote'].forEach(seg);
-  document.querySelectorAll('#chk_comorb .ck').forEach(b=>b.onclick=()=>b.classList.toggle('sel'));
+  ['seg_acomp','seg_sexo','seg_gest','seg_nascant','seg_pacote','seg_via','seg_risco'].forEach(seg);
+  document.querySelectorAll('#chk_comorb .ck').forEach(b=>b.onclick=()=>{
+    const nenhuma=b.dataset.none==='1';
+    b.classList.toggle('sel');
+    document.querySelectorAll('#chk_comorb .ck').forEach(x=>{ if(x!==b && (nenhuma||x.dataset.none==='1')) x.classList.remove('sel'); });
+    document.getElementById('chk_comorb').closest('.field').classList.remove('err');
+  });
+
+  /* Grupo de Robson so na cesarea */
+  const syncRobson=()=>{
+    const cesarea=segVal('seg_via')==='Cesárea', fld=document.getElementById('fld_robson');
+    fld.hidden=!cesarea;
+    if(!cesarea){ document.getElementById('f_robson').value=''; document.getElementById('robsonD').textContent=''; fld.classList.remove('err'); }
+  };
+  document.querySelectorAll('#seg_via .opt').forEach(o=>o.addEventListener('click',syncRobson));
+  document.getElementById('f_robson').onchange=e=>{
+    const g=ROBSON.find(r=>r[0]===e.target.value);
+    document.getElementById('robsonD').textContent=g?g[1]:'';
+    e.target.closest('.field').classList.remove('err');
+  };
+
+  /* botoes "nao tem" */
+  document.querySelectorAll('#cadForm .natem').forEach(b=>{
+    const el=document.getElementById(b.dataset.for); if(!el) return;
+    b.onclick=()=>{
+      const on=b.classList.toggle('sel');
+      if(on){ el.value=b.dataset.val||''; el.disabled=true; } else { el.value=''; el.disabled=false; el.focus(); }
+      const f=el.closest('.field'); if(f) f.classList.remove('err');
+      recalcDPP();
+    };
+    el.addEventListener('input',()=>{ if(el.value) b.classList.remove('sel'); });
+  });
+
+  /* DPP calculadas ao vivo */
+  ['f_dum','f_usdata','f_ussem','f_usdia'].forEach(id=>document.getElementById(id).addEventListener('input',recalcDPP));
+  ['f_ussem','f_usdia'].forEach(id=>{ const el=document.getElementById(id);
+    el.addEventListener('input',()=>{ el.value=el.value.replace(/\D/g,'').slice(0,2); }); });
+  recalcDPP();
   const cep=document.getElementById('f_cep');
   cep.addEventListener('input',()=>{ if(cep.value.replace(/\D/g,'').length===8) buscaCep(); });
   cep.addEventListener('blur',buscaCep);
@@ -1489,7 +1603,8 @@ async function buscaCep(){
   msg.className='cep-msg load'; msg.textContent='Buscando CEP...';
   try{
     const r=await fetch('https://viacep.com.br/ws/'+cep+'/json/'); const d=await r.json();
-    if(d.erro){ msg.className='cep-msg bad'; msg.textContent='CEP não encontrado — confira'; return; }
+    if(d.erro){ msg.className='cep-msg bad'; msg.textContent='CEP não encontrado — pode preencher à mão';
+      ['f_cidade','f_uf','f_bairro','f_logr'].forEach(id=>{ const e=document.getElementById(id); if(e) e.disabled=false; }); return; }
     // cidade/UF sempre travadas (do CEP). Rua/bairro: trava se o CEP trouxer; libera p/ digitar se vier vazio.
     const setF=(id,val)=>{ const el=document.getElementById(id); el.value=(val||'').toUpperCase(); el.disabled=!!val; };
     setF('f_cidade',d.localidade); setF('f_uf',d.uf); setF('f_bairro',d.bairro); setF('f_logr',d.logradouro);
@@ -1497,17 +1612,48 @@ async function buscaCep(){
     msg.className='cep-msg ok';
     msg.textContent=d.localidade+'/'+d.uf+(faltaRua?' — preencha rua, bairro e número':' — agora preencha o número');
     document.getElementById(faltaRua?'f_logr':'f_num').focus();
-  }catch(e){ msg.className='cep-msg bad'; msg.textContent='Erro ao buscar CEP'; }
+  }catch(e){ msg.className='cep-msg bad'; msg.textContent='Não consegui buscar o CEP — pode preencher à mão';
+    ['f_cidade','f_uf','f_bairro','f_logr'].forEach(id=>{ const e=document.getElementById(id); if(e) e.disabled=false; }); }
 }
-function fval(id){ return (document.getElementById(id).value||'').trim(); }
+function fval(id){ const el=document.getElementById(id); return el?(el.value||'').trim():''; }
+function recalcDPP(){
+  const cd=document.getElementById('c_dppd'); if(!cd) return;
+  const dppd=dppPorDUM(fval('f_dum'));
+  cd.textContent=dppd?fmtBR(dppd):'—'; cd.classList.toggle('vazio',!dppd);
+  const dppu=dppPorUS(fval('f_usdata'), document.getElementById('f_ussem').value, document.getElementById('f_usdia').value);
+  const cu=document.getElementById('c_dppu');
+  cu.textContent=dppu?fmtBR(dppu):'—'; cu.classList.toggle('vazio',!dppu);
+  const semUS=!fval('f_usdata'), fld=document.getElementById('fld_usig');
+  fld.hidden=semUS;
+  if(semUS){ document.getElementById('f_ussem').value=''; document.getElementById('f_usdia').value=''; fld.classList.remove('err'); }
+}
+function respondidoCad(id){
+  const el=document.getElementById(id); if(!el) return false;
+  const b=document.querySelector('#cadForm .natem[data-for="'+id+'"]');
+  return !!(el.value||'').trim() || !!(b && b.classList.contains('sel'));
+}
 async function submitCadastro(e){
   e.preventDefault();
-  const reqs=['f_nome','f_cpf','f_cep','f_num','f_wpp','f_acompnome'];
-  let ok=true;
-  reqs.forEach(fid=>{ const el=document.getElementById(fid), fld=el.closest('.field'); if(!el.value.trim()){ fld&&fld.classList.add('err'); ok=false; } else fld&&fld.classList.remove('err'); });
-  if(!ok){ toast('Preencha os campos obrigatórios (*)'); return; }
+  let ok=true, motivo='Preencha os campos obrigatórios (*)';
+  const marca=(el,bom)=>{ const f=el&&el.closest('.field'); if(f) f.classList.toggle('err',!bom); if(!bom) ok=false; };
+  ['f_nome','f_nasc','f_rg','f_cpf','f_cep','f_cidade','f_uf','f_bairro','f_logr','f_num','f_compl',
+   'f_wpp','f_email','f_acompnome','f_acompwpp','f_bebe','f_medico','f_matern',
+   'f_outrascomorb','f_alergias','f_medic']
+    .forEach(fid=>marca(document.getElementById(fid), respondidoCad(fid)));
+  ['seg_acomp','seg_sexo','seg_gest','seg_nascant','seg_pacote','seg_via','seg_risco']
+    .forEach(sid=>marca(document.getElementById(sid), !!segVal(sid)));
+  marca(document.getElementById('f_sangue'), !!document.getElementById('f_sangue').value);
+  marca(document.getElementById('chk_comorb'), !!document.querySelector('#chk_comorb .ck.sel'));
+  const temDUM=!!fval('f_dum'), temUS=!!fval('f_usdata'), temData=temDUM||temUS;
+  marca(document.getElementById('f_dum'), temData);
+  marca(document.getElementById('f_usdata'), temData);
+  if(!temData) motivo='Informe a DUM ou a data do ultrassom para calcular a DPP';
+  marca(document.getElementById('f_ussem'), !temUS || document.getElementById('f_ussem').value!=='');
+  if(segVal('seg_via')==='Cesárea') marca(document.getElementById('f_robson'), !!document.getElementById('f_robson').value);
+  if(!ok){ toast(motivo); const pri=document.querySelector('#cadForm .field.err'); if(pri) pri.scrollIntoView({behavior:'smooth',block:'center'}); return; }
   const btn=document.getElementById('cadSubmit'); btn.disabled=true; btn.textContent='Salvando...';
-  const comorb=[...document.querySelectorAll('#chk_comorb .ck.sel')].map(b=>b.dataset.v);
+  const comorb=[...document.querySelectorAll('#chk_comorb .ck.sel')].filter(b=>b.dataset.none!=='1').map(b=>b.dataset.v);
+  const usData=fval('f_usdata'), usSem=document.getElementById('f_ussem').value, usDia=document.getElementById('f_usdia').value;
   const row={
     nome:fval('f_nome').toUpperCase(), data_nascimento:fval('f_nasc'), rg:fval('f_rg'), cpf:fval('f_cpf'),
     cep:fval('f_cep'), logradouro:fval('f_logr'), numero:fval('f_num'), complemento:fval('f_compl'),
@@ -1515,11 +1661,18 @@ async function submitCadastro(e){
     whatsapp:fval('f_wpp'), email:fval('f_email'),
     acomp_tipo:segVal('seg_acomp'), acomp_nome:fval('f_acompnome'), acomp_whatsapp:fval('f_acompwpp'),
     bebe_nome:fval('f_bebe'), sexo:segVal('seg_sexo'), gestacoes:segVal('seg_gest'),
-    dum:fval('f_dum'), dpp_dum:fval('f_dppd'), dpp_ultra:fval('f_dppu'), nasc_anterior:segVal('seg_nascant'),
+    dum:fval('f_dum'), dpp_dum:dppPorDUM(fval('f_dum')), dpp_ultra:dppPorUS(usData,usSem,usDia), nasc_anterior:segVal('seg_nascant'),
     medico:fval('f_medico'), maternidade:fval('f_matern'),
     tipo_sanguineo:document.getElementById('f_sangue').value, comorbidades:comorb,
     outras_comorbidades:fval('f_outrascomorb'), alergias:fval('f_alergias'), medicacao:fval('f_medic'),
-    pacote:segVal('seg_pacote')
+    pacote:segVal('seg_pacote'),
+    legado:{
+      origem:'Cadastro interno',
+      via_pacote:segVal('seg_via')||null,
+      robson:(segVal('seg_via')==='Cesárea' ? (document.getElementById('f_robson').value||null) : null),
+      risco:segVal('seg_risco')||null,
+      us_data:usData||null, us_ig_sem:usSem!==''?Number(usSem):null, us_ig_dia:usDia!==''?Number(usDia):0
+    }
   };
   Object.keys(row).forEach(k=>{ if(row[k]==='') row[k]=null; });
   try{
