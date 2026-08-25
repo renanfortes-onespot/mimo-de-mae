@@ -234,6 +234,29 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .sec-ic.ok{background:rgba(63,176,122,.16);color:var(--mint-ink)}
 .bd-field{display:flex;flex-direction:column;gap:7px}
 .bd-field .lbl{font-size:10.5px;color:var(--ink2);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.ctr-btn{display:inline-flex;align-items:center;gap:6px;background:var(--btn-soft);color:var(--btn-soft-ink);border:1px solid var(--line);border-radius:9px;padding:5px 10px;font-family:inherit;font-size:11.5px;font-weight:700;white-space:nowrap;transition:.15s}
+.ctr-btn:hover{background:var(--btn);color:#fff;border-color:transparent}
+.ctr-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pcard .ctr-btn{flex:none;align-self:center;margin-left:auto}
+.ptable td.c-acao,.ptable th.c-acao{min-width:auto;width:1%;text-align:right;padding-left:4px;padding-right:8px}
+.ctr-btn.so-icone{padding:5px 7px}
+.ctr-btn.so-icone svg{width:15px;height:15px}
+
+.modal-bg{position:fixed;inset:0;z-index:200;background:rgba(28,16,22,.55);display:flex;align-items:center;justify-content:center;padding:18px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:100%;max-width:430px;max-height:92vh;overflow-y:auto;padding:24px}
+.modal h3{margin:0 0 3px;font-size:19px;font-weight:800;color:var(--ink)}
+.modal .who{margin:0 0 18px;font-size:13px;color:var(--ink3);font-weight:600}
+.modal .field{margin-bottom:15px}
+.modal .field label{display:block;font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--ink3);margin-bottom:6px}
+.modal input[type="text"],.modal input[type="date"]{width:100%;padding:11px 12px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-family:inherit;font-size:15px;font-weight:600}
+.modal input:focus{outline:none;border-color:var(--rose);background:var(--surface)}
+.modal .extenso{font-size:11.5px;color:var(--ink3);margin-top:5px;min-height:1.3em;font-style:italic}
+.modal .acoes{display:flex;gap:9px;margin-top:20px}
+.modal .acoes button{flex:1;padding:12px;border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;transition:.15s}
+.modal .cancelar{background:var(--surface2);color:var(--ink2);border:1px solid var(--line)}
+.modal .baixar{background:var(--btn);color:#fff;border:none}
+.modal .baixar[disabled]{opacity:.6}
+.modal .aviso{background:var(--rose-bg);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--ink2);margin-bottom:16px;line-height:1.45}
 .via-toggle{display:flex;gap:8px}
 .via-opt{flex:1;padding:11px;border-radius:11px;border:1px solid var(--line);background:var(--surface2);color:var(--ink2);font-weight:700;font-size:13px;transition:.15s}
 .via-opt.sel{background:var(--btn);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(126,46,84,.26)}
@@ -554,6 +577,7 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
 
 <!-- ACESSOS (admin) -->
 <div class="view" id="acessosView"></div>
+<div id="modalHost"></div>
 <button class="fab" id="fabNovo" title="Novo cadastro"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
 
 <!-- PAINEL -->
@@ -895,13 +919,13 @@ function renderPTable(list){
   const sty = c => c.w ? ' style="max-width:'+c.w+'px;min-width:'+minW(c)+'px"' : '';
   const head='<thead><tr>'+cols.map(c=>
     '<th class="'+cls(c)+(sortKey===c.k?' on':'')+'" data-k="'+c.k+'"'+sty(c)+' title="Clique para ordenar">'+esc(c.lbl)+'<span class="sarr">'+arr(c.k)+'</span></th>'
-  ).join('')+'</tr></thead>';
+  ).join('')+'<th class="c-acao"></th></tr></thead>';
   const body='<tbody>'+list.map(p=>'<tr data-id="'+p.id+'">'+cols.map(c=>{
     const raw=c.v(p);
     const txt = c.cell ? c.cell(p) : esc(c.d ? c.d(raw,p) : (vazio(raw)?'':String(raw)));
     const tt = c.k==='nome' ? ' title="'+esc(String(raw||''))+'"' : '';
     return '<td class="'+cls(c)+(txt?'':' dim')+'"'+sty(c)+tt+'>'+(txt||'—')+'</td>';
-  }).join('')+'</tr>').join('')+'</tbody>';
+  }).join('')+'<td class="c-acao"><button class="ctr-btn so-icone" data-contrato="'+p.id+'" title="Gerar contrato em Word" aria-label="Gerar contrato"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h2"/></svg></button></td></tr>').join('')+'</tbody>';
   t.innerHTML=head+body;
 }
 
@@ -947,7 +971,7 @@ function renderList(){
   el.innerHTML = list.map(p=>{
     const st=status(p), g=ig(p), id=idade(p.nascimento);
     const sub=[]; if(g)sub.push(g.sem+'s'+g.dia+'d'); if(id)sub.push(id+' anos'); const cid=(p.cidade||cidade(p.endereco)); if(cid)sub.push(cid.toUpperCase());
-    return `<button class="pcard" data-id="${p.id}">
+    return `<div class="pcard" role="button" tabindex="0" data-id="${p.id}">
       <div class="avatar" style="background:${avatarColor(p.nome)}">${initials(p.nome)}</div>
       <div class="pbody">
         <div class="prow">
@@ -959,7 +983,8 @@ function renderList(){
           ${dppEff(p)?`<span class="ig-pill">${countdown(p)}</span>`:''}
         </div>
       </div>
-    </button>`;
+      <button class="ctr-btn" data-contrato="${p.id}" title="Gerar contrato em Word"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h2"/></svg>Contrato</button>
+    </div>`;
   }).join('');
 }
 function cidade(end){
@@ -1093,6 +1118,7 @@ function openDetail(id){
     <div class="section"><h3><span class="sec-ic">${icon('briefcase')}</span>Comercial</h3><div class="kv">
       ${rowKV('Pacote escolhido', p.pacote?nameCase(p.pacote):null)}
       ${rowKV('Parto previsto', p.viaPacote)}
+      <div class="row"><div class="k">Contrato</div><div class="v"><button class="ctr-btn" data-contrato="${p.id}" title="Gerar contrato em Word"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 15h6M9 11h2"/></svg>Gerar contrato</button></div></div>
       ${p.robson?rowKV('Grupo de Robson', p.robson+' — '+(ROBSON.find(r=>r[0]===p.robson)||['',''])[1]):''}
       ${rowKV('Cadastro', fmtBR(p.carimbo))}
     </div></div>
@@ -1108,6 +1134,7 @@ function openDetail(id){
   const bd=document.getElementById('bornDate'); if(bd) bd.onchange=e=>{ if(e.target.value){ updBorn(p.id,'data',e.target.value); renderList(); } };
   document.querySelectorAll('#detailView .via-opt').forEach(el=>el.onclick=()=>{ updBorn(p.id,'via',el.dataset.via); renderList(); reopen(); });
   const bi=document.getElementById('bornInd'); if(bi) bi.oninput=e=>updBorn(p.id,'indicacao',e.target.value);
+  document.querySelectorAll('#detailView [data-contrato]').forEach(b=>b.onclick=()=>abrirContrato(b.dataset.contrato));
   document.querySelectorAll('#riscoTog .via-opt').forEach(el=>el.onclick=()=>{
     const novo = p.risco===el.dataset.risco ? null : el.dataset.risco;   // clicar de novo limpa
     updExtra(p.id,'risco',novo); renderFiltros(); renderList(); reopen();
@@ -1682,6 +1709,238 @@ async function submitCadastro(e){
   }catch(err){ toast('Erro ao salvar: '+err.message); btn.disabled=false; btn.textContent='Salvar cadastro'; }
 }
 
+
+/* ========== CONTRATO ==========
+   Modelos ficam em /contratos. O .docx e um ZIP: aqui o pacote original e
+   reaproveitado byte a byte e so o word/document.xml tem os marcadores
+   trocados, entao logo, estilos e cabecalho ficam exatamente como a Vanessa
+   escreveu. */
+/* ===== Contrato em Word, gerado no navegador =====
+   Um .docx é um ZIP. Aqui o pacote original é reaproveitado byte a byte:
+   só o word/document.xml é descomprimido, tem os marcadores trocados e volta
+   sem compressão. Todo o resto (logo, estilos, cabeçalho) segue intacto. */
+
+const CRC_T=(()=>{const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}
+  return t;})();
+function crc32(u8){ let c=0xFFFFFFFF;
+  for(let i=0;i<u8.length;i++) c=CRC_T[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0; }
+
+function lerZip(u8){
+  const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);
+  let eo=-1;
+  for(let i=u8.length-22;i>=0 && i>u8.length-70000;i--) if(dv.getUint32(i,true)===0x06054b50){eo=i;break;}
+  if(eo<0) throw new Error('ZIP inválido: fim do diretório não encontrado');
+  const n=dv.getUint16(eo+10,true), cdOff=dv.getUint32(eo+16,true);
+  const itens=[]; let p=cdOff;
+  for(let i=0;i<n;i++){
+    if(dv.getUint32(p,true)!==0x02014b50) throw new Error('ZIP inválido: entrada do diretório');
+    const flags=dv.getUint16(p+8,true), method=dv.getUint16(p+10,true);
+    const time=dv.getUint16(p+12,true), date=dv.getUint16(p+14,true);
+    const crc=dv.getUint32(p+16,true), csize=dv.getUint32(p+20,true), usize=dv.getUint32(p+24,true);
+    const nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true);
+    const lo=dv.getUint32(p+42,true);
+    const name=new TextDecoder().decode(u8.subarray(p+46,p+46+nl));
+    const lnl=dv.getUint16(lo+26,true), lel=dv.getUint16(lo+28,true);
+    const dataIni=lo+30+lnl+lel;
+    itens.push({name,flags,method,time,date,crc,csize,usize,dados:u8.subarray(dataIni,dataIni+csize)});
+    p+=46+nl+el+cl;
+  }
+  return itens;
+}
+
+async function inflar(item){
+  if(item.method===0) return item.dados;
+  const s=new Blob([item.dados]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+
+function escreverZip(itens){
+  const enc=new TextEncoder();
+  const partes=[]; const central=[]; let off=0;
+  for(const it of itens){
+    const nome=enc.encode(it.name);
+    const lh=new Uint8Array(30); const dv=new DataView(lh.buffer);
+    dv.setUint32(0,0x04034b50,true); dv.setUint16(4,20,true);
+    dv.setUint16(6,it.flags & ~0x08,true);            // sem descritor de dados
+    dv.setUint16(8,it.method,true);
+    dv.setUint16(10,it.time,true); dv.setUint16(12,it.date,true);
+    dv.setUint32(14,it.crc,true); dv.setUint32(18,it.csize,true); dv.setUint32(22,it.usize,true);
+    dv.setUint16(26,nome.length,true); dv.setUint16(28,0,true);
+    partes.push(lh,nome,it.dados);
+    const cd=new Uint8Array(46); const cv=new DataView(cd.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,it.flags & ~0x08,true); cv.setUint16(10,it.method,true);
+    cv.setUint16(12,it.time,true); cv.setUint16(14,it.date,true);
+    cv.setUint32(16,it.crc,true); cv.setUint32(20,it.csize,true); cv.setUint32(24,it.usize,true);
+    cv.setUint16(28,nome.length,true); cv.setUint32(42,off,true);
+    central.push(cd,nome);
+    off += 30+nome.length+it.csize;
+  }
+  const cdIni=off;
+  let cdTam=0; for(const c of central) cdTam+=c.length;
+  const eo=new Uint8Array(22); const ev=new DataView(eo.buffer);
+  ev.setUint32(0,0x06054b50,true);
+  ev.setUint16(8,itens.length,true); ev.setUint16(10,itens.length,true);
+  ev.setUint32(12,cdTam,true); ev.setUint32(16,cdIni,true);
+  return new Blob([...partes,...central,eo],
+    {type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+}
+
+const escXml = s => String(s==null?'':s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+async function montarDocx(bytes, subs){
+  const itens=lerZip(bytes);
+  const doc=itens.find(i=>i.name==='word/document.xml');
+  if(!doc) throw new Error('document.xml não encontrado no modelo');
+  let xml=new TextDecoder().decode(await inflar(doc));
+  const faltando=[];
+  for(const [k,v] of Object.entries(subs)){
+    const tok='{{'+k+'}}';
+    if(xml.indexOf(tok)<0){ if(v!=null) faltando.push(k); continue; }
+    xml=xml.split(tok).join(escXml(v));
+  }
+  const sobrou=xml.match(/\{\{[A-Z_]+\}\}/g);
+  if(sobrou) for(const t of sobrou) xml=xml.split(t).join('');   // marcador sem valor vira vazio
+  const novo=new TextEncoder().encode(xml);
+  doc.method=0; doc.dados=novo; doc.csize=novo.length; doc.usize=novo.length; doc.crc=crc32(novo);
+  return {blob:escreverZip(itens), faltando};
+}
+
+/* valor por extenso, em reais */
+const UN=['','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','catorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+const DZ=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+const CE=['','cento','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+function ate999(n){
+  if(n===0) return '';
+  if(n===100) return 'cem';
+  const c=Math.floor(n/100), r=n%100, p=[];
+  if(c) p.push(CE[c]);
+  if(r){ if(r<20) p.push(UN[r]); else { const d=Math.floor(r/10), u=r%10; p.push(DZ[d]+(u?' e '+UN[u]:'')); } }
+  return p.join(' e ');
+}
+function extensoInt(n){
+  if(n===0) return 'zero';
+  const mi=Math.floor(n/1000000), mil=Math.floor((n%1000000)/1000), un=n%1000;
+  const bl=[];
+  if(mi)  bl.push(ate999(mi)+(mi===1?' milhão':' milhões'));
+  if(mil) bl.push(mil===1?'mil':ate999(mil)+' mil');
+  if(un)  bl.push(ate999(un));
+  if(bl.length===1) return bl[0];
+  /* em português o "e" só entra antes do último bloco se ele for menor que
+     cem ou uma centena redonda: "mil e quinhentos", mas "mil duzentos e trinta" */
+  const conector = un ? ((un<100 || un%100===0) ? ' e ' : ' ') : ' e ';
+  return bl.slice(0,-1).join(' e ') + conector + bl[bl.length-1];
+}
+function extenso(v){
+  v=Math.round(v*100)/100;
+  const inteiro=Math.floor(v), cent=Math.round((v-inteiro)*100);
+  const milhoesRedondos = inteiro>=1000000 && inteiro%1000000===0;
+  let txt = extensoInt(inteiro);
+  txt += milhoesRedondos ? ' de reais' : (inteiro===1?' real':' reais');
+  if(cent) txt += ' e '+ate999(cent)+(cent===1?' centavo':' centavos');
+  return txt;
+}
+const moeda = v => 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const valorPorExtenso = v => moeda(v)+' ('+extenso(v)+')';
+
+
+const CONTRATOS={
+  'Parto normal|Pacote Completo' :{arq:'parto-normal-completo.docx', valor:3500, rot:'Parto normal · Completo'},
+  'Parto normal|Pacote Essencial':{arq:'parto-normal-essencial.docx',valor:3000, rot:'Parto normal · Essencial'},
+  'Cesárea|Pacote Completo'      :{arq:'cesarea-completo.docx',      valor:2700, rot:'Cesárea · Completo'},
+  'Cesárea|Pacote Essencial'     :{arq:'cesarea-essencial.docx',     valor:2400, rot:'Cesárea · Essencial'},
+};
+const MES_EXT=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const dataExtenso = iso => { const d=parseISO(iso); return d ? d.getDate()+' de '+MES_EXT[d.getMonth()]+' de '+d.getFullYear() : ''; };
+const soDigitos = s => String(s||'').replace(/[^\d,]/g,'').replace(',','.');
+
+function abrirContrato(id){
+  const p=P.find(x=>String(x.id)===String(id)); if(!p) return;
+  const via0 = p.viaPacote==='Cesárea' ? 'Cesárea' : 'Parto normal';
+  const pac0 = /essencial/i.test(p.pacote||'') ? 'Pacote Essencial' : 'Pacote Completo';
+  const host=document.getElementById('modalHost');
+  const seg=(id_,ops,sel)=>'<div class="via-toggle" id="'+id_+'">'+ops.map(o=>
+      '<button type="button" class="via-opt '+(o===sel?'sel':'')+'" data-v="'+esc(o)+'">'+esc(o.replace('Pacote ',''))+'</button>').join('')+'</div>';
+  const semDados=['nome','cpf','endereco'].filter(k=>!p[k]);
+  host.innerHTML=`
+    <div class="modal-bg" id="ctrBg"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="ctrTit">
+      <h3 id="ctrTit">Gerar contrato</h3>
+      <p class="who">${esc((p.nome||'').toUpperCase())}</p>
+      ${semDados.length?'<div class="aviso">Faltam dados no cadastro: '+semDados.join(', ')+'. O contrato sai com esses campos em branco para preencher à mão.</div>':''}
+      <div class="field"><label>Tipo de parto</label>${seg('ctrVia',['Parto normal','Cesárea'],via0)}</div>
+      <div class="field"><label>Pacote</label>${seg('ctrPac',['Pacote Completo','Pacote Essencial'],pac0)}</div>
+      <div class="field"><label>Valor do contrato</label>
+        <input type="text" id="ctrValor" inputmode="decimal" autocomplete="off">
+        <div class="extenso" id="ctrExt"></div></div>
+      <div class="field"><label>Data do contrato</label><input type="date" id="ctrData" value="${isoOf(TODAY)}"></div>
+      <div class="acoes">
+        <button type="button" class="cancelar" id="ctrCancel">Cancelar</button>
+        <button type="button" class="baixar" id="ctrOk">Baixar contrato</button>
+      </div>
+    </div></div>`;
+
+  /* os botoes daqui sao .via-opt (o segVal dos formularios procura .opt) */
+  const escolha = sid => { const b=document.querySelector('#'+sid+' .via-opt.sel'); return b?b.dataset.v:''; };
+  const modelo  = () => CONTRATOS[escolha('ctrVia')+'|'+escolha('ctrPac')];
+
+  const inpValor=document.getElementById('ctrValor');
+  const syncExt=()=>{ const v=parseFloat(soDigitos(inpValor.value));
+    document.getElementById('ctrExt').textContent = isFinite(v)&&v>0 ? extenso(v) : ''; };
+  const syncValor=()=>{ const c=modelo();
+    inpValor.value = c ? c.valor.toLocaleString('pt-BR',{minimumFractionDigits:2}) : '';
+    syncExt(); };
+
+  ['ctrVia','ctrPac'].forEach(sid=>{
+    const el=document.getElementById(sid);
+    el.querySelectorAll('.via-opt').forEach(o=>o.onclick=()=>{
+      el.querySelectorAll('.via-opt').forEach(x=>x.classList.remove('sel'));
+      o.classList.add('sel');
+      syncValor();                       /* trocar a escolha traz o valor daquele contrato */
+    });
+  });
+  syncValor();
+  inpValor.addEventListener('input',syncExt);
+
+  const fechar=()=>{ host.innerHTML=''; document.removeEventListener('keydown',onEsc); };
+  const onEsc=e=>{ if(e.key==='Escape') fechar(); };
+  document.addEventListener('keydown',onEsc);
+  document.getElementById('ctrCancel').onclick=fechar;
+  document.getElementById('ctrBg').onclick=e=>{ if(e.target.id==='ctrBg') fechar(); };
+  document.getElementById('ctrOk').onclick=async ()=>{
+    const btn=document.getElementById('ctrOk');
+    const c=modelo();
+    if(!c){ toast('Escolha o tipo de parto e o pacote'); return; }
+    const v=parseFloat(soDigitos(inpValor.value));
+    if(!isFinite(v)||v<=0){ toast('Informe o valor do contrato'); inpValor.focus(); return; }
+    btn.disabled=true; btn.textContent='Gerando…';
+    try{
+      const r=await fetch('contratos/'+c.arq);
+      if(!r.ok) throw new Error('modelo não encontrado ('+r.status+')');
+      const bytes=new Uint8Array(await r.arrayBuffer());
+      const nome=(p.nome||'').toUpperCase();
+      const {blob}=await montarDocx(bytes,{
+        NOME:nome, NASC:fmtBR(p.nascimento)||'', RG:p.rg||'', CPF:p.cpf||'',
+        ENDERECO:p.endereco||'', TELEFONE:p.whatsapp||'', EMAIL:p.email||'',
+        VALOR:valorPorExtenso(v),
+        NOME_IMAGENS:nome, DATA:dataExtenso(document.getElementById('ctrData').value)||dataExtenso(isoOf(TODAY)),
+        NOME_ASSINATURA:nome,
+      });
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='Contrato - '+nameCase(nome)+' - '+c.rot.replace(' · ','-').replace(/\s/g,'')+'.docx';
+      document.body.appendChild(a); a.click();
+      setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
+      fechar(); toast('Contrato gerado');
+    }catch(err){
+      btn.disabled=false; btn.textContent='Baixar contrato';
+      toast('Não consegui gerar: '+err.message);
+    }
+  };
+}
+
 /* ---------- events ---------- */
 document.getElementById('themeBtn').onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 document.getElementById('tabsBar').onclick=e=>{ const t=e.target.closest('.tab'); if(t)showView(t.dataset.tab); };
@@ -1701,7 +1960,17 @@ document.getElementById('filMenu').onchange=e=>{
 document.querySelector('#filMenu [data-fclear]').onclick=()=>{
   filter='todas'; fSel={}; renderFiltros(); renderList();
 };
-document.getElementById('plist').onclick=e=>{ const c=e.target.closest('.pcard'); if(c)openDetail(c.dataset.id); };
+document.getElementById('plist').onclick=e=>{
+  const cb=e.target.closest('[data-contrato]');
+  if(cb){ e.stopPropagation(); abrirContrato(cb.dataset.contrato); return; }
+  const c=e.target.closest('.pcard'); if(c)openDetail(c.dataset.id);
+};
+/* o card deixou de ser <button>: teclado precisa continuar funcionando */
+document.getElementById('plist').onkeydown=e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const c=e.target.closest('.pcard'); if(!c || e.target.closest('[data-contrato]')) return;
+  e.preventDefault(); openDetail(c.dataset.id);
+};
 document.getElementById('viewToggle').onclick=e=>{
   const b=e.target.closest('.vt-opt'); if(!b) return;
   modoLista=b.dataset.v; localStorage.setItem('mimo_lista_modo',modoLista);
@@ -1740,6 +2009,8 @@ document.addEventListener('click',()=>{
   ['colMenu','filMenu'].forEach(id=>{ const m=document.getElementById(id); if(m) m.style.display='none'; });
 });
 document.getElementById('ptable').onclick=e=>{
+  const cb=e.target.closest('[data-contrato]');
+  if(cb){ e.stopPropagation(); abrirContrato(cb.dataset.contrato); return; }
   const th=e.target.closest('th');
   if(th && th.dataset.k){
     if(sortKey===th.dataset.k) sortDir = sortDir==='asc' ? 'desc' : 'asc';
