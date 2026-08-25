@@ -100,16 +100,26 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .search input{border:none;background:none;outline:none;flex:1;font-size:15px;color:var(--ink)}
 .search input::placeholder{color:var(--ink3)}
 .search svg{width:18px;height:18px;stroke:var(--ink3);fill:none;stroke-width:2}
-.chips{display:flex;flex-wrap:wrap;gap:7px;padding:12px 2px 4px}
+.chips{display:none}
 .chip{
   white-space:nowrap;padding:6px 11px;border-radius:20px;font-size:11.5px;font-weight:600;
   background:var(--surface);border:1px solid var(--line);color:var(--ink2);flex:none;transition:.15s;
 }
 .chip.active{background:var(--btn);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(126,46,84,.28)}
-.count-lbl{font-size:12px;color:var(--ink3);margin:4px 2px 10px;font-weight:600}
+.count-lbl{font-size:12px;color:var(--ink3);margin:4px 2px 8px;font-weight:600}
+.wrap.full{max-width:none}
 
 /* ---------- Barra de ferramentas da lista ---------- */
-.lbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 2px 2px}
+.lbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:4px 2px 2px}
+.lbar .search{flex:1 1 210px;min-width:150px;margin:0;padding:8px 13px}
+.lbar .search input{font-size:13.5px}
+.lbar .search svg{width:16px;height:16px}
+.fbox{position:relative}
+.filmenu{width:290px}
+.filrow{display:flex;align-items:center;gap:8px;padding:6px 12px}
+.filrow span{flex:0 0 108px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--ink3)}
+.filrow select{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface2);border-radius:7px;padding:5px 7px;font-family:inherit;font-size:11.5px;font-weight:600;color:var(--ink);outline:none;cursor:pointer}
+.filrow select.on{border-color:var(--btn);color:var(--rose)}
 .vtoggle{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px}
 .vt-opt{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap;transition:.15s}
 .vt-opt.sel{background:var(--btn);color:#fff}
@@ -123,13 +133,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 /* ---------- Tabela de pacientes ---------- */
 .ptable-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);overflow:auto;max-height:72vh;-webkit-overflow-scrolling:touch}
 .ptable{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;min-width:100%}
-.ptable th{position:sticky;top:0;z-index:3;background:var(--surface2);font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);font-weight:800;text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;transition:.15s}
+.ptable th{min-width:68px;position:sticky;top:0;z-index:3;background:var(--surface2);font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);font-weight:800;text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;transition:.15s}
 .ptable th:hover{color:var(--rose)}
 .ptable th.on{color:var(--rose)}
 .ptable th .sarr{opacity:.3;margin-left:5px;font-size:8px}
 .ptable th.on .sarr{opacity:1}
 .ptable th.num,.ptable td.num{text-align:right}
-.ptable td{padding:9px 10px;border-bottom:1px solid var(--line2);color:var(--ink2);vertical-align:middle}
+.ptable td{min-width:68px;padding:9px 10px;border-bottom:1px solid var(--line2);color:var(--ink2);vertical-align:middle}
 .ptable td.num{font-variant-numeric:tabular-nums}
 .ptable td.dim{color:var(--ink3)}
 .ptable tbody tr{cursor:pointer}
@@ -390,6 +400,11 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
   .exp-btn{padding:7px 11px}
   .ptable-wrap{max-height:66vh}
   .ptable th,.ptable td{padding:9px 8px}
+  .lbar .search{flex:1 1 100%}
+  .lbar{position:relative}
+  .fbox,.colbox{position:static}
+  .colmenu,.filmenu{left:0;right:0;width:auto;top:calc(100% + 6px)}
+  .filrow span{flex:0 0 92px}
 }
 @media(max-width:760px){
   .charts{grid-template-columns:1fr}
@@ -487,13 +502,19 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
 <!-- PACIENTES -->
 <div class="view active" id="pacientesView">
   <div class="wrap">
-    <div class="search">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
-      <input id="searchInput" placeholder="Buscar por nome, cidade, médico…" autocomplete="off">
-    </div>
-    <div class="chips" id="filterChips"></div>
     <div id="importBanner"></div>
     <div class="lbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="searchInput" placeholder="Buscar por nome, cidade, médico…" autocomplete="off">
+      </div>
+      <div class="fbox" id="filBox">
+        <button class="exp-btn" id="btnFil" title="Filtrar por qualquer informação da ficha"><svg viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>Filtros<span class="cols-n" id="filN" style="display:none"></span></button>
+        <div class="colmenu filmenu" id="filMenu" style="display:none">
+          <div class="colmenu-top"><button data-fclear>Limpar filtros</button></div>
+          <div class="colmenu-list" id="filList"></div>
+        </div>
+      </div>
       <div class="vtoggle" id="viewToggle">
         <button class="vt-opt sel" data-v="cards"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/></svg>Cards</button>
         <button class="vt-opt" data-v="tabela"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>Tabela</button>
@@ -629,11 +650,50 @@ const FILTERS=[
   {k:'fim',label:'Concluídas'},
 ];
 
+/* filtros por qualquer informação da ficha; '' = sem filtro */
+const FIL_DEFS=[
+  {k:'__status',    lbl:'Status'},
+  {k:'__tri',       lbl:'Trimestre'},
+  {k:'cidade',      lbl:'Cidade'},
+  {k:'pacote',      lbl:'Pacote'},
+  {k:'medico',      lbl:'Médico(a)'},
+  {k:'maternidade', lbl:'Maternidade'},
+  {k:'sangue',      lbl:'Tipo sanguíneo'},
+  {k:'comorb',      lbl:'Comorbidade'},
+  {k:'sexo',        lbl:'Sexo do bebê'},
+  {k:'gestacoes',   lbl:'Gestações'},
+  {k:'nascAnterior',lbl:'Nasc. anteriores'},
+  {k:'acompTipo',   lbl:'Acompanhante'},
+  {k:'via',         lbl:'Via de parto'},
+  {k:'pagamento',   lbl:'Pagamento'},
+];
+let fSel={};
+
+function valoresDe(k){
+  const s=new Set();
+  if(k==='comorb'){ P.forEach(p=>(p.comorbidades||[]).forEach(c=>{ if(c) s.add(String(c)); })); }
+  else { const col=COLS.find(c=>c.k===k); if(!col) return [];
+         P.forEach(p=>{ const v=col.v(p); if(v!=null && v!=='') s.add(String(v)); }); }
+  return [...s].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+const filtrosAtivos = () =>
+  (filter!=='todas'?1:0) + Object.keys(fSel).filter(k=>fSel[k]).length;
+
 function passFilter(p){
-  const st=status(p);
-  if(filter==='todas') return true;
-  if(filter==='tri3') return trimestre(p)===3;
-  return st.key===filter;
+  if(filter!=='todas'){
+    const st=status(p);
+    if(filter==='tri3'){ if(trimestre(p)!==3) return false; }
+    else if(st.key!==filter) return false;
+  }
+  for(const k in fSel){
+    const val=fSel[k]; if(!val) continue;
+    if(k==='__tri'){ if(trimestre(p)!==Number(val)) return false; continue; }
+    if(k==='comorb'){ if(!(p.comorbidades||[]).map(String).includes(val)) return false; continue; }
+    const col=COLS.find(c=>c.k===k); if(!col) continue;
+    const v=col.v(p);
+    if(String(v==null?'':v)!==val) return false;
+  }
+  return true;
 }
 function passTerm(p){
   if(!term) return true;
@@ -642,11 +702,31 @@ function passTerm(p){
 }
 
 /* ---------- render list ---------- */
-function renderChips(){
-  document.getElementById('filterChips').innerHTML = FILTERS.map(f=>{
-    const n = P.filter(p=>{ const st=status(p); if(f.k==='todas')return true; if(f.k==='tri3')return trimestre(p)===3; return st.key===f.k; }).length;
-    return `<button class="chip ${filter===f.k?'active':''}" data-f="${f.k}">${f.dot?`<span class="cdot" style="background:${f.dot}"></span>`:''}${f.label} · ${n}</button>`;
+function renderFiltros(){
+  const host=document.getElementById('filList'); if(!host) return;
+  const opt=(v,txt,sel)=>'<option value="'+esc(v)+'"'+(sel?' selected':'')+'>'+esc(txt)+'</option>';
+  host.innerHTML = FIL_DEFS.map(f=>{
+    let opts;
+    if(f.k==='__status'){
+      opts = FILTERS.map(x=>{
+        const n = P.filter(p=>{ const st=status(p); if(x.k==='todas')return true; if(x.k==='tri3')return trimestre(p)===3; return st.key===x.k; }).length;
+        return opt(x.k, x.label+' ('+n+')', filter===x.k);
+      }).join('');
+    } else if(f.k==='__tri'){
+      opts = opt('','Todos',!fSel.__tri) + [1,2,3].map(t=>{
+        const n=P.filter(p=>trimestre(p)===t).length;
+        return opt(String(t), t+'º ('+n+')', fSel.__tri===String(t));
+      }).join('');
+    } else {
+      const vs=valoresDe(f.k);
+      opts = opt('','Todos'+(vs.length?' ('+vs.length+')':''),!fSel[f.k])
+           + vs.map(v=>opt(v, v.length>34?v.slice(0,33)+'…':v, fSel[f.k]===v)).join('');
+    }
+    const ativo = f.k==='__status' ? filter!=='todas' : !!fSel[f.k];
+    return '<label class="filrow"><span>'+esc(f.lbl)+'</span><select data-f="'+f.k+'" class="'+(ativo?'on':'')+'">'+opts+'</select></label>';
   }).join('');
+  const b=document.getElementById('filN'), n=filtrosAtivos();
+  if(b){ b.textContent=n; b.style.display = n?'':'none'; }
 }
 /* ---------- colunas (valem para a tabela E para a exportação) ---------- */
 const COLS=[
@@ -681,7 +761,7 @@ const COLS=[
   {k:'acompTipo',   lbl:'Acomp. (tipo)',    t:'text', v:p=>p.acompTipo?nameCase(p.acompTipo):''},
   {k:'acompNome',   lbl:'Acompanhante',     t:'text', v:p=>p.acompNome||''},
   {k:'acompWpp',    lbl:'WhatsApp acomp.',  t:'text', v:p=>p.acompWpp||''},
-  {k:'pacote',      lbl:'Pacote',           t:'text', v:p=>p.pacote?nameCase(p.pacote):''},
+  {k:'pacote',      lbl:'Pacote',           t:'text', v:p=>p.pacote?nameCase(p.pacote).replace(/^Pacote\s+/i,''):''},
   {k:'pagamento',   lbl:'Pagamento',        t:'text', v:p=>p.pagamento||''},
   {k:'parto',       lbl:'Nasceu em',        t:'date', v:p=>{const b=bornInfo(p); return (b&&b.data)?b.data:null;}, d:v=>fmtBR(v)||''},
   {k:'via',         lbl:'Via de parto',     t:'text', v:p=>{const b=bornInfo(p); return (b&&b.via)?b.via:'';}},
@@ -695,13 +775,17 @@ const COL_W={nome:210,cidade:150,email:180,endereco:250,comorb:200,outrasComorb:
 COLS.forEach(c=>{ if(COL_W[c.k]) c.w=COL_W[c.k]; });
 
 /* colunas visíveis na tabela — a exportação continua sempre com as 36 */
-const COLS_PADRAO=['nome','status','ig','dpp','faltam','cidade','whatsapp','pacote','carimbo'];
+/* o conjunto inicial depende da tela: em notebook menor, 13 colunas nao caberiam
+   sem rolagem. Vale so quando ainda nao ha escolha salva — a preferencia manda. */
+const COLS_PADRAO_AMPLO =['nome','status','idade','ig','dpp','faltam','trimestre','cidade','whatsapp','medico','maternidade','pacote','carimbo'];
+const COLS_PADRAO_ENXUTO=['nome','status','idade','ig','dpp','faltam','cidade','whatsapp','pacote','carimbo'];
+const colsPadrao = () => ((window.innerWidth||1440) < 1440 ? COLS_PADRAO_ENXUTO : COLS_PADRAO_AMPLO).slice();
 let colsVis;
 try{
   const s=JSON.parse(localStorage.getItem('mimo_lista_colunas')||'null');
-  colsVis = (Array.isArray(s)&&s.length) ? s.filter(k=>COLS.some(c=>c.k===k)) : COLS_PADRAO.slice();
-}catch(e){ colsVis=COLS_PADRAO.slice(); }
-if(!colsVis.length) colsVis=COLS_PADRAO.slice();
+  colsVis = (Array.isArray(s)&&s.length) ? s.filter(k=>COLS.some(c=>c.k===k)) : colsPadrao();
+}catch(e){ colsVis=colsPadrao(); }
+if(!colsVis.length) colsVis=colsPadrao();
 if(!colsVis.includes('nome')) colsVis.unshift('nome');
 const colsAtivas = () => COLS.filter(c=>colsVis.includes(c.k));
 const salvarCols = () => localStorage.setItem('mimo_lista_colunas', JSON.stringify(colsVis));
@@ -772,7 +856,9 @@ function renderPTable(list){
   const arr = k => sortKey===k ? (sortDir==='asc'?'▲':'▼') : '↕';
   const cols = colsAtivas();
   const cls = c => 'c-'+c.k+(c.num?' num':'')+(c.w?' wrap':'');
-  const sty = c => c.w ? ' style="max-width:'+c.w+'px"' : '';
+  /* piso menor nas colunas de texto (cabe em 1440px); Nome mantem piso maior por ser a coluna-chave */
+  const minW = c => Math.min(c.w, c.k==='nome' ? 150 : 118);
+  const sty = c => c.w ? ' style="max-width:'+c.w+'px;min-width:'+minW(c)+'px"' : '';
   const head='<thead><tr>'+cols.map(c=>
     '<th class="'+cls(c)+(sortKey===c.k?' on':'')+'" data-k="'+c.k+'"'+sty(c)+' title="Clique para ordenar">'+esc(c.lbl)+'<span class="sarr">'+arr(c.k)+'</span></th>'
   ).join('')+'</tr></thead>';
@@ -819,6 +905,7 @@ function renderList(){
   document.getElementById('plist').style.display = tabela?'none':'';
   document.getElementById('ptableWrap').style.display = tabela?'':'none';
   document.getElementById('colBox').style.display = tabela?'':'none';
+  document.querySelector('#pacientesView .wrap').classList.toggle('full', tabela);
   if(tabela){ renderPTable(list); return; }
   const el=document.getElementById('plist');
   if(!list.length){ el.innerHTML='<div class="empty-state">'+icon('search')+'Nenhuma paciente encontrada.</div>'; return; }
@@ -974,8 +1061,8 @@ function openDetail(id){
   `;
   document.getElementById('backBtn').onclick=()=>showView('pacientes');
   const reopen=()=>{ const y=window.scrollY; openDetail(p.id); window.scrollTo(0,y); };
-  const bb=document.getElementById('bornBtn'); if(bb) bb.onclick=()=>{ setBorn(p.id, isoOf(TODAY)); renderChips(); renderList(); openDetail(p.id); };
-  const bu=document.getElementById('bornUndo'); if(bu) bu.onclick=()=>{ setBorn(p.id, null); renderChips(); renderList(); openDetail(p.id); };
+  const bb=document.getElementById('bornBtn'); if(bb) bb.onclick=()=>{ setBorn(p.id, isoOf(TODAY)); renderFiltros(); renderList(); openDetail(p.id); };
+  const bu=document.getElementById('bornUndo'); if(bu) bu.onclick=()=>{ setBorn(p.id, null); renderFiltros(); renderList(); openDetail(p.id); };
   const bd=document.getElementById('bornDate'); if(bd) bd.onchange=e=>{ if(e.target.value){ updBorn(p.id,'data',e.target.value); renderList(); } };
   document.querySelectorAll('#detailView .via-opt').forEach(el=>el.onclick=()=>{ updBorn(p.id,'via',el.dataset.via); renderList(); reopen(); });
   const bi=document.getElementById('bornInd'); if(bi) bi.oninput=e=>updBorn(p.id,'indicacao',e.target.value);
@@ -1194,14 +1281,14 @@ function mapFromDB(r){
 async function deletePaciente(id){
   if(ONLINE){ const {error}=await sb.from('mimo_pacientes').delete().eq('id',id); if(error){ toast('Erro ao excluir: '+error.message); return; } }
   P=P.filter(p=>String(p.id)!==String(id));
-  renderChips(); renderList(); showView('pacientes'); toast('Paciente excluída');
+  renderFiltros(); renderList(); showView('pacientes'); toast('Paciente excluída');
 }
 async function loadPacientes(){
-  if(!ONLINE){ P=(window.PACIENTES||[]); renderChips(); renderList(); return; }
+  if(!ONLINE){ P=(window.PACIENTES||[]); renderFiltros(); renderList(); return; }
   const {data,error}=await sb.from('mimo_pacientes').select('*').order('nome');
   if(error){ toast('Erro ao carregar: '+error.message); return; }
   P=(data||[]).map(mapFromDB);
-  renderChips(); renderList(); renderImportBanner();
+  renderFiltros(); renderList(); renderImportBanner();
 }
 function renderImportBanner(){
   const host=document.getElementById('importBanner'); if(!host) return;
@@ -1433,7 +1520,7 @@ async function submitCadastro(e){
   Object.keys(row).forEach(k=>{ if(row[k]==='') row[k]=null; });
   try{
     if(ONLINE){ const {error}=await sb.from('mimo_pacientes').insert(row); if(error) throw error; await loadPacientes(); }
-    else { row.id=Math.max(0,...P.map(p=>p.id||0))+1; row.comorbidades=comorb; P.push(mapFromDB(row)); renderChips(); renderList(); }
+    else { row.id=Math.max(0,...P.map(p=>p.id||0))+1; row.comorbidades=comorb; P.push(mapFromDB(row)); renderFiltros(); renderList(); }
     toast('Cadastro salvo!'); showView('pacientes');
   }catch(err){ toast('Erro ao salvar: '+err.message); btn.disabled=false; btn.textContent='Salvar cadastro'; }
 }
@@ -1441,7 +1528,22 @@ async function submitCadastro(e){
 /* ---------- events ---------- */
 document.getElementById('themeBtn').onclick=()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 document.getElementById('tabsBar').onclick=e=>{ const t=e.target.closest('.tab'); if(t)showView(t.dataset.tab); };
-document.getElementById('filterChips').onclick=e=>{ const c=e.target.closest('.chip'); if(c){filter=c.dataset.f;renderChips();renderList();} };
+document.getElementById('btnFil').onclick=e=>{
+  e.stopPropagation();
+  const m=document.getElementById('filMenu');
+  m.style.display = m.style.display==='none' ? '' : 'none';
+};
+document.getElementById('filMenu').onclick=e=>e.stopPropagation();
+document.getElementById('filMenu').onchange=e=>{
+  const s=e.target.closest('select[data-f]'); if(!s) return;
+  const k=s.dataset.f;
+  if(k==='__status') filter = s.value || 'todas';
+  else if(s.value) fSel[k]=s.value; else delete fSel[k];
+  renderFiltros(); renderList();
+};
+document.querySelector('#filMenu [data-fclear]').onclick=()=>{
+  filter='todas'; fSel={}; renderFiltros(); renderList();
+};
 document.getElementById('plist').onclick=e=>{ const c=e.target.closest('.pcard'); if(c)openDetail(c.dataset.id); };
 document.getElementById('viewToggle').onclick=e=>{
   const b=e.target.closest('.vt-opt'); if(!b) return;
@@ -1463,7 +1565,7 @@ document.getElementById('colMenu').onclick=e=>{
   e.stopPropagation();
   const pre=e.target.closest('[data-preset]');
   if(pre){
-    colsVis = pre.dataset.preset==='todas' ? COLS.map(c=>c.k) : COLS_PADRAO.slice();
+    colsVis = pre.dataset.preset==='todas' ? COLS.map(c=>c.k) : colsPadrao();
     salvarCols(); buildColMenu(); renderList(); return;
   }
   const cb=e.target.closest('input[data-k]');
@@ -1477,7 +1579,9 @@ document.getElementById('colMenu').onclick=e=>{
   document.getElementById('colsN').textContent=colsAtivas().length;
   renderList();
 };
-document.addEventListener('click',()=>{ const m=document.getElementById('colMenu'); if(m) m.style.display='none'; });
+document.addEventListener('click',()=>{
+  ['colMenu','filMenu'].forEach(id=>{ const m=document.getElementById(id); if(m) m.style.display='none'; });
+});
 document.getElementById('ptable').onclick=e=>{
   const th=e.target.closest('th');
   if(th && th.dataset.k){
@@ -1494,6 +1598,7 @@ document.getElementById('mesToggle').onclick=e=>{ const b=e.target.closest('.mt-
 document.querySelectorAll('.sec-ic[data-ic]').forEach(s=>s.innerHTML=icon(s.dataset.ic));
 buildSortSel();
 buildColMenu();
+renderFiltros();
 document.querySelectorAll('#viewToggle .vt-opt').forEach(x=>x.classList.toggle('sel',x.dataset.v===modoLista));
 applyTheme(localStorage.getItem('mimo_theme')||'dark');
 
@@ -1534,7 +1639,7 @@ document.getElementById('signupForm').onsubmit=async e=>{
     else showLogin(true);
   } else {
     showLogin(false); document.getElementById('logoutBtn').style.display='none';
-    P=(window.PACIENTES||[]); renderChips(); renderList();
+    P=(window.PACIENTES||[]); renderFiltros(); renderList();
   }
 })();
 </script>
