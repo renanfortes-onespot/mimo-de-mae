@@ -138,6 +138,19 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .ptable td.c-nome{z-index:2;background:var(--surface);font-weight:700;color:var(--ink)}
 .ptable th.c-nome{z-index:4;background:var(--surface2)}
 .ptable tbody tr:hover td.c-nome{background:var(--rose-bg)}
+.ptable th.wrap,.ptable td.wrap{white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+.colbox{position:relative}
+.colmenu{position:absolute;top:calc(100% + 6px);right:0;z-index:40;width:250px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.22);overflow:hidden}
+.colmenu-top{display:flex;gap:6px;padding:9px 10px;border-bottom:1px solid var(--line2)}
+.colmenu-top button{flex:1;padding:6px 8px;border-radius:8px;background:var(--surface2);color:var(--ink2);font-size:11px;font-weight:700;transition:.15s}
+.colmenu-top button:hover{background:var(--btn);color:#fff}
+.colmenu-list{max-height:330px;overflow-y:auto;padding:5px 0}
+.colmenu-list label{display:flex;align-items:center;gap:9px;padding:7px 13px;font-size:12px;color:var(--ink2);cursor:pointer}
+.colmenu-list label:hover{background:var(--rose-bg)}
+.colmenu-list input{accent-color:var(--btn);width:14px;height:14px;cursor:pointer;flex:none}
+.colmenu-list label.fixa{opacity:.55;cursor:default}
+.colmenu-list label.fixa:hover{background:none}
+.cols-n{background:var(--btn);color:#fff;border-radius:20px;padding:1px 7px;font-size:10px;font-weight:800}
 
 /* ---------- Patient list ---------- */
 .plist{display:flex;flex-direction:column;gap:10px}
@@ -486,6 +499,13 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
         <button class="vt-opt" data-v="tabela"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>Tabela</button>
       </div>
       <label class="sortbox"><span class="sb-lbl">Ordenar</span><select id="sortSel"></select></label>
+      <div class="colbox" id="colBox" style="display:none">
+        <button class="exp-btn" id="btnCols" title="Escolher quais colunas aparecem na tabela"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16"/></svg>Colunas<span class="cols-n" id="colsN"></span></button>
+        <div class="colmenu" id="colMenu" style="display:none">
+          <div class="colmenu-top"><button data-preset="padrao">Principais</button><button data-preset="todas">Todas</button></div>
+          <div class="colmenu-list" id="colList"></div>
+        </div>
+      </div>
       <button class="exp-btn" id="btnExport" title="Baixar a lista atual em CSV (abre no Excel)"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar</button>
     </div>
     <div class="count-lbl" id="countLbl"></div>
@@ -668,6 +688,24 @@ const COLS=[
   {k:'carimbo',     lbl:'Cadastro',         t:'date', v:p=>p.carimbo, d:v=>fmtBR(v)||''},
 ];
 
+/* larguras máximas: colunas de texto longo quebram em vez de esticar a tabela */
+const COL_W={nome:210,cidade:150,email:180,endereco:250,comorb:200,outrasComorb:180,alergias:175,
+  medicacao:225,medico:165,maternidade:175,acompNome:155,acompTipo:140,acompWpp:140,pagamento:150,
+  gestacoes:145,nascAnterior:145,via:140,bebe:130,sangue:120};
+COLS.forEach(c=>{ if(COL_W[c.k]) c.w=COL_W[c.k]; });
+
+/* colunas visíveis na tabela — a exportação continua sempre com as 36 */
+const COLS_PADRAO=['nome','status','ig','dpp','faltam','cidade','whatsapp','pacote','carimbo'];
+let colsVis;
+try{
+  const s=JSON.parse(localStorage.getItem('mimo_lista_colunas')||'null');
+  colsVis = (Array.isArray(s)&&s.length) ? s.filter(k=>COLS.some(c=>c.k===k)) : COLS_PADRAO.slice();
+}catch(e){ colsVis=COLS_PADRAO.slice(); }
+if(!colsVis.length) colsVis=COLS_PADRAO.slice();
+if(!colsVis.includes('nome')) colsVis.unshift('nome');
+const colsAtivas = () => COLS.filter(c=>colsVis.includes(c.k));
+const salvarCols = () => localStorage.setItem('mimo_lista_colunas', JSON.stringify(colsVis));
+
 /* ---------- ordenação (compartilhada entre cards e tabela) ---------- */
 const SORTS=[
   {v:'padrao:asc',   lbl:'Padrão (parto próximo primeiro)'},
@@ -732,15 +770,29 @@ function renderPTable(list){
   const t=document.getElementById('ptable');
   if(!list.length){ t.innerHTML='<tbody><tr><td style="padding:26px;text-align:center;color:var(--ink3)">Nenhuma paciente encontrada.</td></tr></tbody>'; return; }
   const arr = k => sortKey===k ? (sortDir==='asc'?'▲':'▼') : '↕';
-  const head='<thead><tr>'+COLS.map(c=>
-    '<th class="c-'+c.k+(c.num?' num':'')+(sortKey===c.k?' on':'')+'" data-k="'+c.k+'" title="Clique para ordenar">'+esc(c.lbl)+'<span class="sarr">'+arr(c.k)+'</span></th>'
+  const cols = colsAtivas();
+  const cls = c => 'c-'+c.k+(c.num?' num':'')+(c.w?' wrap':'');
+  const sty = c => c.w ? ' style="max-width:'+c.w+'px"' : '';
+  const head='<thead><tr>'+cols.map(c=>
+    '<th class="'+cls(c)+(sortKey===c.k?' on':'')+'" data-k="'+c.k+'"'+sty(c)+' title="Clique para ordenar">'+esc(c.lbl)+'<span class="sarr">'+arr(c.k)+'</span></th>'
   ).join('')+'</tr></thead>';
-  const body='<tbody>'+list.map(p=>'<tr data-id="'+p.id+'">'+COLS.map(c=>{
+  const body='<tbody>'+list.map(p=>'<tr data-id="'+p.id+'">'+cols.map(c=>{
     const raw=c.v(p);
     const txt = c.cell ? c.cell(p) : esc(c.d ? c.d(raw,p) : (vazio(raw)?'':String(raw)));
-    return '<td class="c-'+c.k+(c.num?' num':'')+(txt?'':' dim')+'">'+(txt||'—')+'</td>';
+    return '<td class="'+cls(c)+(txt?'':' dim')+'"'+sty(c)+'>'+(txt||'—')+'</td>';
   }).join('')+'</tr>').join('')+'</tbody>';
   t.innerHTML=head+body;
+}
+
+function buildColMenu(){
+  const host=document.getElementById('colList'); if(!host) return;
+  host.innerHTML=COLS.map(c=>{
+    const fixa = c.k==='nome';
+    return '<label class="'+(fixa?'fixa':'')+'" title="'+(fixa?'A coluna Nome é sempre exibida':'')+'">'
+         + '<input type="checkbox" data-k="'+c.k+'"'+(colsVis.includes(c.k)?' checked':'')+(fixa?' disabled':'')+'>'
+         + esc(c.lbl)+'</label>';
+  }).join('');
+  const n=document.getElementById('colsN'); if(n) n.textContent=colsAtivas().length;
 }
 
 /* ---------- exportação (respeita filtro, busca e ordenação atuais) ---------- */
@@ -766,6 +818,7 @@ function renderList(){
   const tabela = modoLista==='tabela';
   document.getElementById('plist').style.display = tabela?'none':'';
   document.getElementById('ptableWrap').style.display = tabela?'':'none';
+  document.getElementById('colBox').style.display = tabela?'':'none';
   if(tabela){ renderPTable(list); return; }
   const el=document.getElementById('plist');
   if(!list.length){ el.innerHTML='<div class="empty-state">'+icon('search')+'Nenhuma paciente encontrada.</div>'; return; }
@@ -1401,6 +1454,30 @@ document.getElementById('sortSel').onchange=e=>{
   const [k,d]=e.target.value.split(':'); sortKey=k; sortDir=d; renderList();
 };
 document.getElementById('btnExport').onclick=exportarCSV;
+document.getElementById('btnCols').onclick=e=>{
+  e.stopPropagation();
+  const m=document.getElementById('colMenu');
+  m.style.display = m.style.display==='none' ? '' : 'none';
+};
+document.getElementById('colMenu').onclick=e=>{
+  e.stopPropagation();
+  const pre=e.target.closest('[data-preset]');
+  if(pre){
+    colsVis = pre.dataset.preset==='todas' ? COLS.map(c=>c.k) : COLS_PADRAO.slice();
+    salvarCols(); buildColMenu(); renderList(); return;
+  }
+  const cb=e.target.closest('input[data-k]');
+  if(!cb) return;
+  const k=cb.dataset.k;
+  if(cb.checked){ if(!colsVis.includes(k)) colsVis.push(k); }
+  else colsVis=colsVis.filter(x=>x!==k);
+  if(!colsVis.includes('nome')) colsVis.unshift('nome');
+  colsVis = COLS.map(c=>c.k).filter(x=>colsVis.includes(x));      // mantém a ordem original das colunas
+  salvarCols();
+  document.getElementById('colsN').textContent=colsAtivas().length;
+  renderList();
+};
+document.addEventListener('click',()=>{ const m=document.getElementById('colMenu'); if(m) m.style.display='none'; });
 document.getElementById('ptable').onclick=e=>{
   const th=e.target.closest('th');
   if(th && th.dataset.k){
@@ -1416,6 +1493,7 @@ document.getElementById('mesToggle').onclick=e=>{ const b=e.target.closest('.mt-
 /* ---------- init ---------- */
 document.querySelectorAll('.sec-ic[data-ic]').forEach(s=>s.innerHTML=icon(s.dataset.ic));
 buildSortSel();
+buildColMenu();
 document.querySelectorAll('#viewToggle .vt-opt').forEach(x=>x.classList.toggle('sel',x.dataset.v===modoLista));
 applyTheme(localStorage.getItem('mimo_theme')||'dark');
 
