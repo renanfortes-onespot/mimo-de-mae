@@ -108,6 +108,37 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .chip.active{background:var(--btn);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(126,46,84,.28)}
 .count-lbl{font-size:12px;color:var(--ink3);margin:4px 2px 10px;font-weight:600}
 
+/* ---------- Barra de ferramentas da lista ---------- */
+.lbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 2px 2px}
+.vtoggle{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px}
+.vt-opt{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;color:var(--ink2);white-space:nowrap;transition:.15s}
+.vt-opt.sel{background:var(--btn);color:#fff}
+.vt-opt svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sortbox{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 11px;font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3)}
+.sortbox select{border:none;background:none;outline:none;font-family:inherit;font-size:11.5px;font-weight:700;color:var(--ink);text-transform:none;letter-spacing:0;cursor:pointer;max-width:200px}
+.exp-btn{display:flex;align-items:center;gap:6px;background:var(--btn-soft);color:var(--btn-soft-ink);border:1px solid var(--line);border-radius:10px;padding:7px 13px;font-size:11.5px;font-weight:700;transition:.15s}
+.exp-btn:hover{background:var(--btn);color:#fff;border-color:transparent}
+.exp-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- Tabela de pacientes ---------- */
+.ptable-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow);overflow:auto;max-height:72vh;-webkit-overflow-scrolling:touch}
+.ptable{border-collapse:separate;border-spacing:0;font-size:12px;white-space:nowrap;min-width:100%}
+.ptable th{position:sticky;top:0;z-index:3;background:var(--surface2);font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);font-weight:800;text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;transition:.15s}
+.ptable th:hover{color:var(--rose)}
+.ptable th.on{color:var(--rose)}
+.ptable th .sarr{opacity:.3;margin-left:5px;font-size:8px}
+.ptable th.on .sarr{opacity:1}
+.ptable th.num,.ptable td.num{text-align:right}
+.ptable td{padding:9px 10px;border-bottom:1px solid var(--line2);color:var(--ink2);vertical-align:middle}
+.ptable td.num{font-variant-numeric:tabular-nums}
+.ptable td.dim{color:var(--ink3)}
+.ptable tbody tr{cursor:pointer}
+.ptable tbody tr:hover td{background:var(--rose-bg)}
+.ptable th.c-nome,.ptable td.c-nome{position:sticky;left:0;box-shadow:1px 0 0 var(--line)}
+.ptable td.c-nome{z-index:2;background:var(--surface);font-weight:700;color:var(--ink)}
+.ptable th.c-nome{z-index:4;background:var(--surface2)}
+.ptable tbody tr:hover td.c-nome{background:var(--rose-bg)}
+
 /* ---------- Patient list ---------- */
 .plist{display:flex;flex-direction:column;gap:10px}
 .pcard{
@@ -337,6 +368,16 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
 .toast.show{opacity:1}
 .logout-btn{background:rgba(255,255,255,.18);color:#fff;font-size:11px;font-weight:700;padding:8px 12px;border-radius:20px}
 
+@media(max-width:560px){
+  .lbar{gap:6px}
+  .sb-lbl{display:none}
+  .sortbox{flex:1;min-width:0;padding:6px 10px}
+  .sortbox select{max-width:none;width:100%;font-size:11px}
+  .vt-opt{padding:6px 10px}
+  .exp-btn{padding:7px 11px}
+  .ptable-wrap{max-height:66vh}
+  .ptable th,.ptable td{padding:9px 8px}
+}
 @media(max-width:760px){
   .charts{grid-template-columns:1fr}
   .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
@@ -439,8 +480,17 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
     </div>
     <div class="chips" id="filterChips"></div>
     <div id="importBanner"></div>
+    <div class="lbar">
+      <div class="vtoggle" id="viewToggle">
+        <button class="vt-opt sel" data-v="cards"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/></svg>Cards</button>
+        <button class="vt-opt" data-v="tabela"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>Tabela</button>
+      </div>
+      <label class="sortbox"><span class="sb-lbl">Ordenar</span><select id="sortSel"></select></label>
+      <button class="exp-btn" id="btnExport" title="Baixar a lista atual em CSV (abre no Excel)"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>Exportar</button>
+    </div>
     <div class="count-lbl" id="countLbl"></div>
     <div class="plist" id="plist"></div>
+    <div class="ptable-wrap" id="ptableWrap" style="display:none"><table class="ptable" id="ptable"></table></div>
   </div>
 </div>
 
@@ -578,18 +628,145 @@ function renderChips(){
     return `<button class="chip ${filter===f.k?'active':''}" data-f="${f.k}">${f.dot?`<span class="cdot" style="background:${f.dot}"></span>`:''}${f.label} · ${n}</button>`;
   }).join('');
 }
-function renderList(){
-  const prio={prox:0,ativa:1,semdata:2,fim:3};
-  const list = P.filter(p=>passFilter(p)&&passTerm(p))
-    .sort((a,b)=>{
-      const sa=status(a),sb=status(b);
-      if(prio[sa.key]!==prio[sb.key]) return prio[sa.key]-prio[sb.key];
-      const da=dppEff(a),db=dppEff(b);
+/* ---------- colunas (valem para a tabela E para a exportação) ---------- */
+const COLS=[
+  {k:'nome',        lbl:'Nome',             t:'text', v:p=>(p.nome||'').toUpperCase()},
+  {k:'status',      lbl:'Status',           t:'text', v:p=>status(p).label, cell:p=>{const st=status(p); return '<span class="badge '+st.cls+'">'+st.label+'</span>';}},
+  {k:'idade',       lbl:'Idade',            t:'num',  v:p=>idade(p.nascimento), d:v=>v==null?'':v+' anos', num:1},
+  {k:'ig',          lbl:'IG',               t:'num',  v:p=>{const g=ig(p); return g?g.dias:null;}, d:(v,p)=>{const g=ig(p); return g?g.sem+'s'+g.dia+'d':'';}, num:1},
+  {k:'dpp',         lbl:'DPP',              t:'date', v:p=>dppEff(p), d:v=>fmtBR(v)||''},
+  {k:'faltam',      lbl:'Faltam (dias)',    t:'num',  v:p=>{const d=dppEff(p); return d?diffDays(parseISO(d),TODAY):null;}, num:1},
+  {k:'trimestre',   lbl:'Trimestre',        t:'num',  v:p=>trimestre(p), d:v=>v==null?'':v+'º', num:1},
+  {k:'cidade',      lbl:'Cidade',           t:'text', v:p=>((p.cidade||cidade(p.endereco))||'').toUpperCase()},
+  {k:'whatsapp',    lbl:'WhatsApp',         t:'text', v:p=>p.whatsapp||''},
+  {k:'email',       lbl:'E-mail',           t:'text', v:p=>p.email||''},
+  {k:'nascimento',  lbl:'Data de nasc.',    t:'date', v:p=>p.nascimento, d:v=>fmtBR(v)||''},
+  {k:'cpf',         lbl:'CPF',              t:'text', v:p=>p.cpf||''},
+  {k:'rg',          lbl:'RG',               t:'text', v:p=>p.rg||''},
+  {k:'endereco',    lbl:'Endereço',         t:'text', v:p=>p.endereco||''},
+  {k:'gestacoes',   lbl:'Gestações',        t:'text', v:p=>p.gestacoes?nameCase(p.gestacoes):''},
+  {k:'nascAnterior',lbl:'Nasc. anteriores', t:'text', v:p=>p.nascAnterior?nameCase(p.nascAnterior):''},
+  {k:'bebe',        lbl:'Bebê',             t:'text', v:p=>p.bebe||''},
+  {k:'sexo',        lbl:'Sexo',             t:'text', v:p=>p.sexo||''},
+  {k:'dum',         lbl:'DUM',              t:'date', v:p=>p.dum, d:v=>fmtBR(v)||''},
+  {k:'dppUltra',    lbl:'DPP (ultrassom)',  t:'date', v:p=>p.dppUltra, d:v=>fmtBR(v)||''},
+  {k:'dppDum',      lbl:'DPP (DUM)',        t:'date', v:p=>p.dppDum, d:v=>fmtBR(v)||''},
+  {k:'sangue',      lbl:'Tipo sanguíneo',   t:'text', v:p=>p.tipoSanguineo?bloodClean(p.tipoSanguineo):''},
+  {k:'comorb',      lbl:'Comorbidades',     t:'text', v:p=>(p.comorbidades||[]).join(', ')},
+  {k:'outrasComorb',lbl:'Outras comorb.',   t:'text', v:p=>p.outrasComorb||''},
+  {k:'alergias',    lbl:'Alergias',         t:'text', v:p=>p.alergias||''},
+  {k:'medicacao',   lbl:'Medicação',        t:'text', v:p=>p.medicacao||''},
+  {k:'medico',      lbl:'Médico(a)',        t:'text', v:p=>p.medico||''},
+  {k:'maternidade', lbl:'Maternidade',      t:'text', v:p=>p.maternidade||''},
+  {k:'acompTipo',   lbl:'Acomp. (tipo)',    t:'text', v:p=>p.acompTipo?nameCase(p.acompTipo):''},
+  {k:'acompNome',   lbl:'Acompanhante',     t:'text', v:p=>p.acompNome||''},
+  {k:'acompWpp',    lbl:'WhatsApp acomp.',  t:'text', v:p=>p.acompWpp||''},
+  {k:'pacote',      lbl:'Pacote',           t:'text', v:p=>p.pacote?nameCase(p.pacote):''},
+  {k:'pagamento',   lbl:'Pagamento',        t:'text', v:p=>p.pagamento||''},
+  {k:'parto',       lbl:'Nasceu em',        t:'date', v:p=>{const b=bornInfo(p); return (b&&b.data)?b.data:null;}, d:v=>fmtBR(v)||''},
+  {k:'via',         lbl:'Via de parto',     t:'text', v:p=>{const b=bornInfo(p); return (b&&b.via)?b.via:'';}},
+  {k:'carimbo',     lbl:'Cadastro',         t:'date', v:p=>p.carimbo, d:v=>fmtBR(v)||''},
+];
+
+/* ---------- ordenação (compartilhada entre cards e tabela) ---------- */
+const SORTS=[
+  {v:'padrao:asc',   lbl:'Padrão (parto próximo primeiro)'},
+  {v:'dpp:asc',      lbl:'DPP — mais próxima'},
+  {v:'dpp:desc',     lbl:'DPP — mais distante'},
+  {v:'nome:asc',     lbl:'Nome — A a Z'},
+  {v:'nome:desc',    lbl:'Nome — Z a A'},
+  {v:'carimbo:desc', lbl:'Cadastro — mais recente'},
+  {v:'carimbo:asc',  lbl:'Cadastro — mais antigo'},
+  {v:'idade:desc',   lbl:'Idade — maior'},
+  {v:'idade:asc',    lbl:'Idade — menor'},
+  {v:'cidade:asc',   lbl:'Cidade — A a Z'},
+];
+let sortKey='padrao', sortDir='asc';
+let modoLista = localStorage.getItem('mimo_lista_modo')==='tabela' ? 'tabela' : 'cards';
+
+const vazio = v => v==null || v==='';
+function cmpVals(a,b,t){
+  if(t==='num')  return a-b;
+  if(t==='date') return parseISO(a)-parseISO(b);
+  return String(a).localeCompare(String(b),'pt-BR',{sensitivity:'base'});
+}
+function ordenar(list){
+  if(sortKey==='padrao'){
+    const prio={prox:0,ativa:1,semdata:2,fim:3};
+    return list.sort((a,b)=>{
+      const sa=status(a), stb=status(b);
+      if(prio[sa.key]!==prio[stb.key]) return prio[sa.key]-prio[stb.key];
+      const da=dppEff(a), db=dppEff(b);
       if(sa.key==='fim'){ if(da&&db) return parseISO(db)-parseISO(da); }       // concluídas: mais recentes primeiro
       if(da&&db) return parseISO(da)-parseISO(db);                              // ativas: DPP mais próxima primeiro
-      if(da)return -1; if(db)return 1; return a.nome.localeCompare(b.nome);
+      if(da)return -1; if(db)return 1; return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
     });
+  }
+  const col=COLS.find(c=>c.k===sortKey); if(!col) return list;
+  const sgn = sortDir==='desc' ? -1 : 1;
+  return list.sort((a,b)=>{
+    const va=col.v(a), vb=col.v(b);
+    if(vazio(va)||vazio(vb)) return (vazio(va)&&vazio(vb))?0:(vazio(va)?1:-1);   // sem informação vai sempre para o fim
+    const r=cmpVals(va,vb,col.t);
+    return r ? r*sgn : String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
+  });
+}
+function listaFiltrada(){ return ordenar(P.filter(p=>passFilter(p)&&passTerm(p))); }
+
+function buildSortSel(){
+  const sel=document.getElementById('sortSel'); if(!sel) return;
+  sel.innerHTML = SORTS.map(o=>'<option value="'+o.v+'">'+o.lbl+'</option>').join('')
+                + '<option value="__col" hidden>Coluna da tabela</option>';
+}
+function syncSortSel(){
+  const sel=document.getElementById('sortSel'); if(!sel) return;
+  const cur=sortKey+':'+sortDir;
+  if(SORTS.some(o=>o.v===cur)){ sel.value=cur; return; }
+  const col=COLS.find(c=>c.k===sortKey), o=sel.querySelector('option[value="__col"]');
+  if(o) o.textContent=(col?col.lbl:'Personalizado')+(sortDir==='asc'?' ↑':' ↓');
+  sel.value='__col';
+}
+
+/* ---------- tabela ---------- */
+function renderPTable(list){
+  const t=document.getElementById('ptable');
+  if(!list.length){ t.innerHTML='<tbody><tr><td style="padding:26px;text-align:center;color:var(--ink3)">Nenhuma paciente encontrada.</td></tr></tbody>'; return; }
+  const arr = k => sortKey===k ? (sortDir==='asc'?'▲':'▼') : '↕';
+  const head='<thead><tr>'+COLS.map(c=>
+    '<th class="c-'+c.k+(c.num?' num':'')+(sortKey===c.k?' on':'')+'" data-k="'+c.k+'" title="Clique para ordenar">'+esc(c.lbl)+'<span class="sarr">'+arr(c.k)+'</span></th>'
+  ).join('')+'</tr></thead>';
+  const body='<tbody>'+list.map(p=>'<tr data-id="'+p.id+'">'+COLS.map(c=>{
+    const raw=c.v(p);
+    const txt = c.cell ? c.cell(p) : esc(c.d ? c.d(raw,p) : (vazio(raw)?'':String(raw)));
+    return '<td class="c-'+c.k+(c.num?' num':'')+(txt?'':' dim')+'">'+(txt||'—')+'</td>';
+  }).join('')+'</tr>').join('')+'</tbody>';
+  t.innerHTML=head+body;
+}
+
+/* ---------- exportação (respeita filtro, busca e ordenação atuais) ---------- */
+function exportarCSV(){
+  const list=listaFiltrada();
+  if(!list.length){ toast('Não há pacientes para exportar'); return; }
+  const q = v => { let x=String(vazio(v)?'':v); if(/^[=+@]/.test(x)) x="'"+x; return '"'+x.replace(/"/g,'""')+'"'; };  // aspas + trava fórmula do Excel
+  const linhas=[COLS.map(c=>q(c.lbl)).join(';')];
+  list.forEach(p=>linhas.push(COLS.map(c=>{ const raw=c.v(p); return q(c.d?c.d(raw,p):raw); }).join(';')));
+  const blob=new Blob(['\uFEFF'+linhas.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='pacientes-mimo-de-mae-'+isoOf(new Date())+'.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },0);
+  toast(list.length+(list.length===1?' paciente exportada':' pacientes exportadas'));
+}
+
+function renderList(){
+  const list = listaFiltrada();
   document.getElementById('countLbl').textContent = list.length+' de '+P.length+' pacientes';
+  syncSortSel();
+  const tabela = modoLista==='tabela';
+  document.getElementById('plist').style.display = tabela?'none':'';
+  document.getElementById('ptableWrap').style.display = tabela?'':'none';
+  if(tabela){ renderPTable(list); return; }
   const el=document.getElementById('plist');
   if(!list.length){ el.innerHTML='<div class="empty-state">'+icon('search')+'Nenhuma paciente encontrada.</div>'; return; }
   el.innerHTML = list.map(p=>{
@@ -1213,11 +1390,33 @@ document.getElementById('themeBtn').onclick=()=>applyTheme(document.documentElem
 document.getElementById('tabsBar').onclick=e=>{ const t=e.target.closest('.tab'); if(t)showView(t.dataset.tab); };
 document.getElementById('filterChips').onclick=e=>{ const c=e.target.closest('.chip'); if(c){filter=c.dataset.f;renderChips();renderList();} };
 document.getElementById('plist').onclick=e=>{ const c=e.target.closest('.pcard'); if(c)openDetail(c.dataset.id); };
+document.getElementById('viewToggle').onclick=e=>{
+  const b=e.target.closest('.vt-opt'); if(!b) return;
+  modoLista=b.dataset.v; localStorage.setItem('mimo_lista_modo',modoLista);
+  document.querySelectorAll('#viewToggle .vt-opt').forEach(x=>x.classList.toggle('sel',x===b));
+  renderList();
+};
+document.getElementById('sortSel').onchange=e=>{
+  if(e.target.value==='__col'){ syncSortSel(); return; }
+  const [k,d]=e.target.value.split(':'); sortKey=k; sortDir=d; renderList();
+};
+document.getElementById('btnExport').onclick=exportarCSV;
+document.getElementById('ptable').onclick=e=>{
+  const th=e.target.closest('th');
+  if(th && th.dataset.k){
+    if(sortKey===th.dataset.k) sortDir = sortDir==='asc' ? 'desc' : 'asc';
+    else { sortKey=th.dataset.k; sortDir='asc'; }
+    renderList(); document.getElementById('ptableWrap').scrollTop=0; return;
+  }
+  const tr=e.target.closest('tbody tr'); if(tr && tr.dataset.id) openDetail(tr.dataset.id);
+};
 document.getElementById('searchInput').oninput=e=>{ term=e.target.value.trim(); renderList(); };
 document.getElementById('mesToggle').onclick=e=>{ const b=e.target.closest('.mt-opt'); if(!b)return; mesModo=b.dataset.m; document.querySelectorAll('#mesToggle .mt-opt').forEach(x=>x.classList.toggle('sel',x===b)); renderDash(); };
 
 /* ---------- init ---------- */
 document.querySelectorAll('.sec-ic[data-ic]').forEach(s=>s.innerHTML=icon(s.dataset.ic));
+buildSortSel();
+document.querySelectorAll('#viewToggle .vt-opt').forEach(x=>x.classList.toggle('sel',x.dataset.v===modoLista));
 applyTheme(localStorage.getItem('mimo_theme')||'dark');
 
 document.getElementById('fabNovo').onclick=renderCadastro;
