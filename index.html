@@ -400,6 +400,7 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
   .exp-btn{padding:7px 11px}
   .ptable-wrap{max-height:66vh}
   .ptable th,.ptable td{padding:9px 8px}
+  .ptable th.c-nome,.ptable td.c-nome{max-width:150px;overflow:hidden;text-overflow:ellipsis}
   .lbar .search{flex:1 1 100%}
   .lbar{position:relative}
   .fbox,.colbox{position:static}
@@ -769,7 +770,7 @@ const COLS=[
 ];
 
 /* larguras máximas: colunas de texto longo quebram em vez de esticar a tabela */
-const COL_W={nome:210,cidade:150,email:180,endereco:250,comorb:200,outrasComorb:180,alergias:175,
+const COL_W={cidade:150,email:180,endereco:250,comorb:200,outrasComorb:180,alergias:175,
   medicacao:225,medico:165,maternidade:175,acompNome:155,acompTipo:140,acompWpp:140,pagamento:150,
   gestacoes:145,nascAnterior:145,via:140,bebe:130,sangue:120};
 COLS.forEach(c=>{ if(COL_W[c.k]) c.w=COL_W[c.k]; });
@@ -777,9 +778,11 @@ COLS.forEach(c=>{ if(COL_W[c.k]) c.w=COL_W[c.k]; });
 /* colunas visíveis na tabela — a exportação continua sempre com as 36 */
 /* o conjunto inicial depende da tela: em notebook menor, 13 colunas nao caberiam
    sem rolagem. Vale so quando ainda nao ha escolha salva — a preferencia manda. */
-const COLS_PADRAO_AMPLO =['nome','status','idade','ig','dpp','faltam','trimestre','cidade','whatsapp','medico','maternidade','pacote','carimbo'];
+const COLS_PADRAO_AMPLO =['nome','status','idade','ig','dpp','faltam','trimestre','cidade','whatsapp','pacote','carimbo'];
 const COLS_PADRAO_ENXUTO=['nome','status','idade','ig','dpp','faltam','cidade','whatsapp','pacote','carimbo'];
-const colsPadrao = () => ((window.innerWidth||1440) < 1440 ? COLS_PADRAO_ENXUTO : COLS_PADRAO_AMPLO).slice();
+const COLS_PADRAO_MINIMO=['nome','status','ig','dpp','faltam','cidade','whatsapp','pacote','carimbo'];
+const colsPadrao = () => { const w=window.innerWidth||1440;
+  return (w>=1440 ? COLS_PADRAO_AMPLO : w>=1320 ? COLS_PADRAO_ENXUTO : COLS_PADRAO_MINIMO).slice(); };
 let colsVis;
 try{
   const s=JSON.parse(localStorage.getItem('mimo_lista_colunas')||'null');
@@ -865,7 +868,8 @@ function renderPTable(list){
   const body='<tbody>'+list.map(p=>'<tr data-id="'+p.id+'">'+cols.map(c=>{
     const raw=c.v(p);
     const txt = c.cell ? c.cell(p) : esc(c.d ? c.d(raw,p) : (vazio(raw)?'':String(raw)));
-    return '<td class="'+cls(c)+(txt?'':' dim')+'"'+sty(c)+'>'+(txt||'—')+'</td>';
+    const tt = c.k==='nome' ? ' title="'+esc(String(raw||''))+'"' : '';
+    return '<td class="'+cls(c)+(txt?'':' dim')+'"'+sty(c)+tt+'>'+(txt||'—')+'</td>';
   }).join('')+'</tr>').join('')+'</tbody>';
   t.innerHTML=head+body;
 }
