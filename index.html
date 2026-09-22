@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#4A1B36">
-<meta name="build" content="2026-09-22-pwa1">
+<meta name="build" content="2026-09-22-cards1">
 <link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -462,6 +462,14 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
   .fbox,.colbox{position:static}
   .colmenu,.filmenu{left:0;right:0;width:auto;top:calc(100% + 6px)}
   .filrow span{flex:0 0 92px}
+  /* Card no celular. Antes o nome dividia ~130px com a tarja de status e
+     quebrava em 4-5 linhas, encavalando no badge. Agora leva a linha inteira. */
+  .pcard{gap:10px;padding:11px 12px}
+  .pcard .prow{flex-wrap:wrap;row-gap:5px}
+  .pcard .nm{flex:1 1 100%;font-size:13px;line-height:1.25}
+  /* o rotulo "Contrato" comia ~65px de largura: no celular fica so o icone */
+  .pcard .ctr-btn{padding:9px;gap:0;font-size:0}
+  .pcard .ctr-btn svg{width:18px;height:18px}
 }
 @media(max-width:760px){
   .charts{grid-template-columns:1fr}
