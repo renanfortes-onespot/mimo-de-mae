@@ -1,18 +1,61 @@
 name: keep-supabase-alive
+
+# Consulta o banco a cada 2 dias. Serve para dois fins: manter o projeto
+# acordado e avisar cedo quando ele sair do ar por qualquer motivo.
+# So considera sucesso HTTP 200 com dados de verdade — qualquer outra coisa
+# falha a execucao, e o GitHub manda o e-mail de falha.
+
 on:
   schedule:
     - cron: '17 9 */2 * *'
   workflow_dispatch:
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase (mantem o projeto acordado)
+      - name: Consultar o Supabase
+        env:
+          SUPA_URL: 'https://orcctjbosfdtxdfdhnbx.supabase.co/rest/v1/mimo_pacientes?select=id&limit=1'
+          SUPA_KEY: 'sb_publishable_oNu_rbujM-PNfsfO8Cod5Q_EREIbAbA'
+          TENTATIVAS: '3'
         run: |
-          echo "Pingando o Supabase para evitar a pausa por inatividade..."
-          code=$(curl -sS -o /dev/null -w "%{http_code}" \
-            -H "apikey: sb_publishable_oNu_rbujM-PNfsfO8Cod5Q_EREIbAbA" \
-            "https://orcctjbosfdtxdfdhnbx.supabase.co/rest/v1/mimo_pacientes?select=id&limit=1")
-          echo "Resposta HTTP: $code"
-          if [ "$code" = "000" ]; then echo "Falha de conexao"; exit 1; fi
-          echo "OK - banco recebeu a requisicao (segue acordado)."
+          set -u
+          corpo="$(mktemp)"
+          code=''; trecho=''
+
+          for i in $(seq 1 "$TENTATIVAS"); do
+            code="$(curl -sS -m 25 -o "$corpo" -w '%{http_code}' \
+                     -H "apikey: $SUPA_KEY" "$SUPA_URL" || echo '000')"
+            trecho="$(head -c 300 "$corpo" | tr -d '\n')"
+            echo "Tentativa $i de $TENTATIVAS — HTTP $code"
+
+            # PostgREST devolve um array JSON quando a consulta funciona
+            if [ "$code" = '200' ] && printf '%s' "$trecho" | grep -q '^\['; then
+              echo "OK — o banco respondeu com dados. Projeto no ar."
+              echo "✅ Supabase respondeu 200 com dados (tentativa $i)." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+
+            [ "$i" -lt "$TENTATIVAS" ] && { echo "Vou tentar de novo em 20s..."; sleep 20; }
+          done
+
+          # chegou aqui: as tres tentativas falharam
+          case "$code" in
+            000) motivo="Nao consegui nem conectar: o endereco do projeto nao resolve. E o que acontece quando o projeto esta pausado ou desligado por cobranca. Confira em https://supabase.com/dashboard" ;;
+            401|403) motivo="A chave publica foi recusada (HTTP $code). Se a chave do projeto mudou, atualize em index.html, em cadastro/index.html e neste workflow." ;;
+            404) motivo="HTTP 404 — o caminho nao existe. A tabela mimo_pacientes pode ter sido renomeada ou removida." ;;
+            5??) motivo="O Supabase respondeu $code (erro do lado deles). Veja https://status.supabase.com" ;;
+            200) motivo="Respondeu 200, mas sem dados no formato esperado. Resposta: $trecho" ;;
+            *)   motivo="Resposta inesperada: HTTP $code. Resposta: $trecho" ;;
+          esac
+
+          echo "FALHOU — $motivo"
+          {
+            echo "### ❌ O app Mimo de Mãe esta sem banco"
+            echo ""
+            echo "**HTTP $code** depois de $TENTATIVAS tentativas."
+            echo ""
+            echo "$motivo"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
