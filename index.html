@@ -2,8 +2,16 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#DDF3E6">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#4A1B36">
+<meta name="build" content="2026-09-22-pwa1">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mimo de Mãe">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icone-192.png">
 <title>Mimo de Mãe — Assistência ao Parto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,6 +80,15 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   backdrop-filter:blur(6px);color:#fff;font-size:17px;transition:.15s;flex:none;
 }
 .icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.pwa-dica{
+  position:fixed;left:14px;right:14px;bottom:18px;z-index:70;max-width:420px;margin:0 auto;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:16px 18px;box-shadow:var(--shadow-lg);
+}
+.pwa-dica b{font-size:13.5px}
+.pwa-dica p{font-size:12.5px;color:var(--ink2);margin:7px 0 12px;line-height:1.5}
+.pwa-dica .pwa-ok{background:var(--btn);color:#fff;border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:700;width:100%}
 .hero-hi{position:relative;z-index:2;margin-top:14px;font-size:15.5px;font-weight:700;line-height:1.25}
 .hero-hi small{display:block;font-size:11px;font-weight:500;opacity:.82;margin-top:2px}
 
@@ -363,6 +380,12 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
 .login-err.okmsg{background:rgba(63,176,122,.15);color:var(--mint-ink)}
 .login-alt{text-align:center;font-size:12.5px;color:var(--ink2);margin-top:16px}
 .login-alt a{color:var(--rose);font-weight:700;text-decoration:none}
+.inst-login{
+  width:100%;margin-top:14px;padding:11px 14px;border-radius:12px;
+  background:var(--btn-soft);color:var(--btn-soft-ink);border:1px solid var(--line);
+  font-size:12.5px;font-weight:700;transition:.15s;
+}
+.inst-login:active{transform:scale(.99)}
 
 /* Acessos */
 .acc-list{display:flex;flex-direction:column;gap:10px}
@@ -481,6 +504,7 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
       <input type="password" id="loginPass" autocomplete="current-password" required>
       <button type="submit" class="login-btn" id="loginBtn">Entrar</button>
       <div class="login-alt">Não tem acesso? <a href="#" id="toSignup">Solicitar</a></div>
+      <button type="button" class="inst-login" id="instalarBtn2" style="display:none">Instalar o app no celular</button>
     </form>
     <form class="login-card" id="signupForm" style="display:none">
       <div class="login-logo"><img src="./logo.png" alt="Mimo de Mãe"></div>
@@ -521,6 +545,7 @@ html[data-theme="dark"] .login-err{background:#3A211E;color:#F0A99F}
       <span>Enf.ª Vanessa Cardinal</span>
     </div>
     <div class="spacer"></div>
+    <button class="icon-btn" id="instalarBtn" title="Instalar o app" style="display:none"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 11l5 5 5-5M5 20h14"/></svg></button>
     <button class="icon-btn" id="acessosBtn" title="Acessos" style="display:none"></button>
     <button class="icon-btn" id="themeBtn" title="Tema">🌙</button>
     <button class="logout-btn" id="logoutBtn" title="Sair" style="display:none">Sair</button>
@@ -1320,7 +1345,7 @@ function donut(id,entries){
 function applyTheme(t){
   document.documentElement.setAttribute('data-theme',t);
   document.getElementById('themeBtn').innerHTML = icon(t==='dark'?'sun':'moon');
-  document.querySelector('meta[name=theme-color]').setAttribute('content', t==='dark'?'#1E3527':'#DDF3E6');
+  document.querySelector('meta[name=theme-color]').setAttribute('content', t==='dark'?'#4A1B36':'#7E2E54');
   localStorage.setItem('mimo_theme',t);
   if(document.getElementById('painelView').classList.contains('active')) setTimeout(renderDash,50);
 }
@@ -2070,6 +2095,58 @@ document.getElementById('signupForm').onsubmit=async e=>{
     P=(window.PACIENTES||[]); renderFiltros(); renderList();
   }
 })();
+
+/* ================= PWA ================= */
+/* Botao "Instalar". No Android/Chrome o navegador entrega beforeinstallprompt;
+   no iPhone isso nao existe, entao o botao abre a instrucao do Compartilhar. */
+(function(){
+  var botoes = [document.getElementById('instalarBtn'), document.getElementById('instalarBtn2')].filter(Boolean);
+  if(!botoes.length) return;
+  var evt = null;
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var iOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  // o do hero e um circulo (grid); o da tela de login e um botao largo (block)
+  function mostra(){ if(standalone) return; botoes.forEach(function(b){ b.style.display = b.id==='instalarBtn' ? 'grid' : 'block'; }); }
+  function esconde(){ botoes.forEach(function(b){ b.style.display='none'; }); }
+  function dicaFecha(){ var d=document.getElementById('pwaDica'); if(d) d.remove(); }
+
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); evt=e; mostra(); });
+  window.addEventListener('appinstalled', function(){ evt=null; esconde(); dicaFecha(); toast('App instalado!'); });
+  if(iOS && !standalone) mostra();
+
+  botoes.forEach(function(b){ b.onclick = aoClicar; });
+  function aoClicar(){
+    if(evt){ evt.prompt(); evt.userChoice.then(function(r){ if(r && r.outcome==='accepted') esconde(); evt=null; }); return; }
+    dicaFecha();
+    var d=document.createElement('div'); d.className='pwa-dica'; d.id='pwaDica';
+    d.innerHTML = '<b>Instalar na tela de início</b>'
+      + '<p>Toque em <b>Compartilhar</b> — o quadrado com a seta para cima, na barra do navegador — '
+      + 'e escolha <b>Adicionar à Tela de Início</b>.</p>'
+      + '<button class="pwa-ok">Entendi</button>';
+    document.body.appendChild(d);
+    d.querySelector('.pwa-ok').onclick = dicaFecha;
+  };
+})();
+
+/* Service worker. As tres blindagens contra o app abrir numa versao velha:
+   1) updateViaCache:'none' - senao o PROPRIO sw.js fica no cache HTTP e a
+      versao nova nunca chega a ser descoberta;
+   2) reg.update() ao abrir e ao voltar para a tela;
+   3) recarrega uma vez quando um SW novo assume o controle. */
+if('serviceWorker' in navigator) window.addEventListener('load', function(){
+  var tinhaControle = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function(reg){
+    reg.update();
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) reg.update(); });
+  }).catch(function(e){ console.warn('SW nao registrou:', e); });
+  var recarregou = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(!tinhaControle) return;          // 1a instalacao: nao precisa recarregar
+    if(recarregou) return; recarregou = true;
+    location.reload();
+  });
+});
 </script>
 </body>
 </html>
