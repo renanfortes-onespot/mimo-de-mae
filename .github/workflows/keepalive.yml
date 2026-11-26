@@ -1,19 +1,28 @@
 name: keep-supabase-alive
 
-# Consulta o banco a cada 2 dias. Serve para dois fins: manter o projeto
+# Consulta o banco de hora em hora. Serve para dois fins: manter o projeto
 # acordado e avisar cedo quando ele sair do ar por qualquer motivo.
 # So considera sucesso HTTP 200 com dados de verdade — qualquer outra coisa
 # falha a execucao, e o GitHub manda o e-mail de falha.
+#
+# Por que de hora em hora: o plano free do Supabase pausa o projeto depois de
+# 7 dias sem uso. A cada 2 dias isso dava 3 chances na janela; de hora em hora
+# da 168. O agendador do GitHub atrasa e pula execucoes, entao a folga importa.
 
 on:
   schedule:
-    - cron: '17 9 */2 * *'
+    - cron: '17 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Consultar o Supabase
         env:
           SUPA_URL: 'https://orcctjbosfdtxdfdhnbx.supabase.co/rest/v1/mimo_pacientes?select=id&limit=1'
@@ -61,3 +70,26 @@ jobs:
             echo "$motivo"
           } >> "$GITHUB_STEP_SUMMARY"
           exit 1
+
+      - name: Manter o repositorio ativo
+        # O GitHub desliga o cron de repositorio publico parado ha 60 dias, e
+        # sem avisar. Foi o que aconteceu em 23/11/2026. Se passar de 40 dias
+        # sem commit, grava uma marca e reinicia esse relogio.
+        # continue-on-error: falha aqui nunca derruba o ping acima.
+        if: always()
+        continue-on-error: true
+        run: |
+          set -u
+          dias=$(( ( $(date +%s) - $(git log -1 --format=%ct) ) / 86400 ))
+          echo "Ultimo commit ha $dias dia(s)."
+          if [ "$dias" -lt 40 ]; then
+            echo "Menos de 40 dias — nada a fazer."
+            exit 0
+          fi
+          date -u +'%Y-%m-%dT%H:%M:%SZ' > .keepalive
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .keepalive
+          git commit -m 'Keep-alive: marca de atividade para o cron nao ser desligado'
+          git push origin HEAD:main
+          echo "Marca de atividade gravada."
